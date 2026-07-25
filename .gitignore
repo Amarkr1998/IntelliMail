@@ -1,0 +1,12 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+
+# Unrelated local tooling scaffold (not part of this project)
+.github/modernize/
+
+# Logs
+*.log

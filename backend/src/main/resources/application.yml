@@ -1,0 +1,96 @@
+spring:
+  application:
+    name: intellimail-backend
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/intellimail}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+    show-sql: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+  ai:
+    azure:
+      openai:
+        api-key: ${AZURE_OPENAI_API_KEY:}
+        endpoint: ${AZURE_OPENAI_ENDPOINT:}
+        chat:
+          options:
+            deployment-name: ${AZURE_OPENAI_DEPLOYMENT:gpt-4o}
+            # No default temperature or max-tokens here: some Azure deployments
+            # (newer reasoning-tier models) reject any non-default temperature
+            # ("Only the default (1) value is supported") and reject the legacy
+            # `max_tokens` parameter outright, requiring `max_completion_tokens`
+            # instead - which Spring AI 1.0.0 doesn't yet expose. See
+            # AzureOpenAiClient's class Javadoc for the full explanation. If your
+            # deployment supports custom sampling params, re-add them here.
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+    include-binding-errors: always
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+intellimail:
+  jwt:
+    secret: ${JWT_SECRET:change-this-secret-in-production-min-256-bits-long-please}
+    access-token-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}      # 15 minutes
+    refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} # 7 days
+    issuer: intellimail
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,chrome-extension://*}
+  ai:
+    default-temperature: ${AZURE_OPENAI_TEMPERATURE:0.7}
+    default-max-tokens: ${AZURE_OPENAI_MAX_TOKENS:1024}
+    send-sampling-parameters: ${AI_SEND_SAMPLING_PARAMETERS:true}
+    retry:
+      max-attempts: 3
+      backoff-ms: 500
+
+logging:
+  level:
+    root: INFO
+    com.intellimail: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

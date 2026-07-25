@@ -1,0 +1,383 @@
+{
+  "info": {
+    "name": "IntelliMail API",
+    "description": "AI-Driven Email Automation Platform — full REST API collection. Register or log in first; the access/refresh tokens and a few resource ids are captured automatically into collection variables so the rest of the requests can be run in order.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" },
+    { "key": "templateId", "value": "", "type": "string" },
+    { "key": "emailRequestId", "value": "", "type": "string" },
+    { "key": "replyId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Ada Lovelace\",\n  \"email\": \"ada@intellimail.com\",\n  \"password\": \"password123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', json.data.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ada@intellimail.com\",\n  \"password\": \"password123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', json.data.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api", "auth", "refresh"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('accessToken', json.data.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/users/profile", "host": ["{{baseUrl}}"], "path": ["api", "users", "profile"] }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/users/profile", "host": ["{{baseUrl}}"], "path": ["api", "users", "profile"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Ada Byron Lovelace\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Email",
+      "item": [
+        {
+          "name": "Generate Reply",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/email/generate", "host": ["{{baseUrl}}"], "path": ["api", "email", "generate"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"originalContent\": \"Hi, can we move our meeting from Tuesday to Wednesday at 2pm?\",\n  \"instructions\": \"Keep it short and friendly\",\n  \"promptTemplateId\": null\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('emailRequestId', json.data.emailRequestId);",
+                  "  pm.collectionVariables.set('replyId', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Improve (Rewrite / Grammar / Expand / Shorten)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/email/improve", "host": ["{{baseUrl}}"], "path": ["api", "email", "improve"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"hey can u send that file when u get a sec thx\",\n  \"style\": \"PROFESSIONAL_REWRITE\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Translate",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/email/translate", "host": ["{{baseUrl}}"], "path": ["api", "email", "translate"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Thank you for your prompt response.\",\n  \"targetLanguage\": \"French\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Summarize",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/email/summarize", "host": ["{{baseUrl}}"], "path": ["api", "email", "summarize"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Paste a long email thread here to get a concise summary of the key points and action items.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Subject Line",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/email/subject", "host": ["{{baseUrl}}"], "path": ["api", "email", "subject"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"I wanted to follow up on the proposal I sent last week regarding the Q3 marketing budget.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Follow-up",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/email/followup", "host": ["{{baseUrl}}"], "path": ["api", "email", "followup"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"originalContent\": \"Hi team, sharing the Q3 proposal for review, let me know your thoughts.\",\n  \"instructions\": \"It's been a week with no response\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Custom (Meeting/Thank You/Apology/Sales/HR/Marketing/Cold Outreach/Custom Prompt)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/email/custom", "host": ["{{baseUrl}}"], "path": ["api", "email", "custom"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestType\": \"COLD_OUTREACH\",\n  \"context\": \"Introducing our new analytics product to a mid-market SaaS company\",\n  \"customPrompt\": \"Mention our 20% launch discount\",\n  \"promptTemplateId\": null\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "History",
+      "item": [
+        {
+          "name": "Get History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/history?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "history"],
+              "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
+            }
+          }
+        },
+        {
+          "name": "Regenerate Reply",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/history/{{emailRequestId}}/regenerate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "history", "{{emailRequestId}}", "regenerate"]
+            }
+          }
+        },
+        {
+          "name": "Favorite Reply",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/history/replies/{{replyId}}/favorite?favorite=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "history", "replies", "{{replyId}}", "favorite"],
+              "query": [{ "key": "favorite", "value": "true" }]
+            }
+          }
+        },
+        {
+          "name": "Delete History Entry",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/history/{{emailRequestId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "history", "{{emailRequestId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Templates",
+      "item": [
+        {
+          "name": "List Templates",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/templates?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "templates"],
+              "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
+            }
+          }
+        },
+        {
+          "name": "Create Template",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/templates", "host": ["{{baseUrl}}"], "path": ["api", "templates"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Friendly Cold Outreach\",\n  \"description\": \"My go-to opener for new leads\",\n  \"category\": \"COLD_OUTREACH\",\n  \"promptText\": \"Write a friendly, low-pressure cold outreach email about {{context}}\",\n  \"systemPrompt\": null,\n  \"isPublic\": false\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('templateId', pm.response.json().data.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Template",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/templates/{{templateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "templates", "{{templateId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Friendly Cold Outreach v2\",\n  \"description\": \"Updated opener\",\n  \"category\": \"COLD_OUTREACH\",\n  \"promptText\": \"Write a warm, concise cold outreach email about {{context}}\",\n  \"systemPrompt\": null,\n  \"isPublic\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Template",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/templates/{{templateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "templates", "{{templateId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Get Analytics (last 30 days)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/analytics", "host": ["{{baseUrl}}"], "path": ["api", "analytics"] }
+          }
+        },
+        {
+          "name": "Get Analytics (custom range)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics?from=2026-01-01T00:00:00Z&to=2026-12-31T23:59:59Z",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics"],
+              "query": [
+                { "key": "from", "value": "2026-01-01T00:00:00Z" },
+                { "key": "to", "value": "2026-12-31T23:59:59Z" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

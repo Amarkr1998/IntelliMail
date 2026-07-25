@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>IntelliMail</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="popup">
+      <header class="popup-header">
+        <span class="popup-title">IntelliMail</span>
+      </header>
+
+      <div id="logged-out-view" class="popup-view">
+        <form id="login-form">
+          <label>
+            Email
+            <input type="email" id="email" required autocomplete="username" />
+          </label>
+          <label>
+            Password
+            <input type="password" id="password" required autocomplete="current-password" />
+          </label>
+          <button type="submit">Log In</button>
+        </form>
+        <p class="popup-error" id="login-error"></p>
+      </div>
+
+      <div id="logged-in-view" class="popup-view popup-hidden">
+        <p class="popup-welcome">Signed in as <strong id="user-name"></strong></p>
+        <p class="popup-hint">Open Gmail and click the floating "AI" button on any email to generate a reply.</p>
+        <button type="button" id="logout-button">Log Out</button>
+      </div>
+
+      <details class="popup-settings">
+        <summary>API Settings</summary>
+        <label>
+          Backend URL
+          <input type="text" id="api-base-url" placeholder="http://localhost:8080" />
+        </label>
+        <button type="button" id="save-settings">Save</button>
+        <p class="popup-hint-small">Change this if your IntelliMail backend runs somewhere other than localhost:8080.</p>
+      </details>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

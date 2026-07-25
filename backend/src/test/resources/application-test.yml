@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:intellimail_test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  flyway:
+    enabled: false
+  ai:
+    azure:
+      openai:
+        api-key: test-key
+        endpoint: https://test.openai.azure.com
+
+intellimail:
+  jwt:
+    secret: test-secret-key-for-unit-tests-only-not-for-production-use
+    access-token-expiration-ms: 900000
+    refresh-token-expiration-ms: 604800000
+    issuer: intellimail-test
