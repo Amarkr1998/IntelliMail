@@ -40,6 +40,7 @@ import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -77,6 +78,13 @@ class EmailServiceTest {
 
         user = User.builder().fullName("User").email("user@intellimail.com").password("hashed").build();
         user.setId(UUID.randomUUID());
+
+        // Every EmailService method now runs its prompt through withReferenceContext();
+        // this test suite doesn't exercise reference-context behavior itself (see
+        // EmailServiceReferenceContextTest), so just echo the prompt back unchanged.
+        // lenient() because not every test path reaches this call (e.g. the
+        // inaccessible-prompt-template test throws before any prompt is built).
+        lenient().when(promptFactory.withReferenceContext(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test
@@ -91,7 +99,7 @@ class EmailServiceTest {
         AiGenerationResult result = new AiGenerationResult("Generated reply text", "gpt-4o", 50, 30, 80, 900L);
         when(azureOpenAiClient.generate(eq(prompt), anyDouble(), anyInt())).thenReturn(result);
 
-        EmailGenerateRequest request = new EmailGenerateRequest("Original email content", "Keep it short", null);
+        EmailGenerateRequest request = new EmailGenerateRequest("Original email content", "Keep it short", null, null);
 
         EmailReplyResponse response = emailService.generateReply(user.getId(), request);
 
@@ -116,7 +124,7 @@ class EmailServiceTest {
                 .build();
         when(promptTemplateRepository.findById(templateId)).thenReturn(Optional.of(privateTemplate));
 
-        EmailGenerateRequest request = new EmailGenerateRequest("content", null, templateId);
+        EmailGenerateRequest request = new EmailGenerateRequest("content", null, templateId, null);
 
         assertThatThrownBy(() -> emailService.generateReply(user.getId(), request))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -137,7 +145,7 @@ class EmailServiceTest {
         AiGenerationResult result = new AiGenerationResult("Fixed text", "gpt-4o", 20, 10, 30, 400L);
         when(azureOpenAiClient.generate(eq(prompt), anyDouble(), anyInt())).thenReturn(result);
 
-        EmailImproveRequest request = new EmailImproveRequest("Some typo-ridden text", RequestType.GRAMMAR_CORRECTION);
+        EmailImproveRequest request = new EmailImproveRequest("Some typo-ridden text", RequestType.GRAMMAR_CORRECTION, null);
 
         EmailReplyResponse response = emailService.improve(user.getId(), request);
 
@@ -159,7 +167,7 @@ class EmailServiceTest {
         AiGenerationException aiFailure = new AiGenerationException("Azure OpenAI request failed after 3 attempt(s)");
         when(azureOpenAiClient.generate(eq(prompt), anyDouble(), anyInt())).thenThrow(aiFailure);
 
-        EmailSummarizeRequest request = new EmailSummarizeRequest("Some long email content to summarize");
+        EmailSummarizeRequest request = new EmailSummarizeRequest("Some long email content to summarize", null);
 
         assertThatThrownBy(() -> emailService.summarize(user.getId(), request))
                 .isInstanceOf(AiGenerationException.class);

@@ -8,6 +8,9 @@ public record EmailSummarizeRequest(
 
         @NotBlank(message = "Email content is required")
         @Size(max = 20_000, message = "Content must not exceed 20,000 characters")
-        String content
+        String content,
+
+        @Size(max = 20_000, message = "Reference context must not exceed 20,000 characters")
+        String referenceContext
 ) {
 }

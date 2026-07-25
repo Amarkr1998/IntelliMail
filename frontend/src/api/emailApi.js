@@ -20,3 +20,12 @@ export const generateFollowup = (payload) =>
 
 export const generateCustom = (payload) =>
   axiosClient.post('/api/email/custom', payload).then((res) => res.data.data);
+
+/** Uploads a file (PDF, Word, plain text, etc.) and returns its extracted text — no AI call happens here. */
+export const extractFile = (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return axiosClient
+    .post('/api/email/extract', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+    .then((res) => res.data.data);
+};

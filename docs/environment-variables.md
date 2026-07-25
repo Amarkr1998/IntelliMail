@@ -43,6 +43,7 @@ All variables are read by [`backend/src/main/resources/application.yml`](../back
 |---|---|---|
 | `SERVER_PORT` | `8080` | Backend HTTP port |
 | `SPRING_PROFILES_ACTIVE` | `dev` | `dev` or `prod` (see `application-dev.yml` / `application-prod.yml`) |
+| `UPLOAD_MAX_FILE_SIZE` | `10MB` | Max size for `POST /api/email/extract` file uploads (Spring's `DataSize` syntax, e.g. `20MB`) |
 
 ## Frontend (`frontend/.env` or `.env.local`)
 

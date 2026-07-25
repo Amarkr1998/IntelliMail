@@ -1,0 +1,13 @@
+package com.intellimail.mail.exception;
+
+/** Thrown when an uploaded file is empty, unreadable, or contains no extractable text. */
+public class FileProcessingException extends RuntimeException {
+
+    public FileProcessingException(String message) {
+        super(message);
+    }
+
+    public FileProcessingException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}

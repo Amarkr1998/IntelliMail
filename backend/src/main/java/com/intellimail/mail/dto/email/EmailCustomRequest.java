@@ -28,6 +28,9 @@ public record EmailCustomRequest(
         @Size(max = 5_000, message = "Custom prompt must not exceed 5,000 characters")
         String customPrompt,
 
-        UUID promptTemplateId
+        UUID promptTemplateId,
+
+        @Size(max = 20_000, message = "Reference context must not exceed 20,000 characters")
+        String referenceContext
 ) {
 }

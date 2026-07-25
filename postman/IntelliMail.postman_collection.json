@@ -139,7 +139,7 @@
             "url": { "raw": "{{baseUrl}}/api/email/generate", "host": ["{{baseUrl}}"], "path": ["api", "email", "generate"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"originalContent\": \"Hi, can we move our meeting from Tuesday to Wednesday at 2pm?\",\n  \"instructions\": \"Keep it short and friendly\",\n  \"promptTemplateId\": null\n}"
+              "raw": "{\n  \"originalContent\": \"Hi, can we move our meeting from Tuesday to Wednesday at 2pm?\",\n  \"instructions\": \"Keep it short and friendly\",\n  \"promptTemplateId\": null,\n  \"referenceContext\": null\n}"
             }
           },
           "event": [
@@ -166,7 +166,7 @@
             "url": { "raw": "{{baseUrl}}/api/email/improve", "host": ["{{baseUrl}}"], "path": ["api", "email", "improve"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"content\": \"hey can u send that file when u get a sec thx\",\n  \"style\": \"PROFESSIONAL_REWRITE\"\n}"
+              "raw": "{\n  \"content\": \"hey can u send that file when u get a sec thx\",\n  \"style\": \"PROFESSIONAL_REWRITE\",\n  \"referenceContext\": null\n}"
             }
           }
         },
@@ -178,7 +178,7 @@
             "url": { "raw": "{{baseUrl}}/api/email/translate", "host": ["{{baseUrl}}"], "path": ["api", "email", "translate"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"content\": \"Thank you for your prompt response.\",\n  \"targetLanguage\": \"French\"\n}"
+              "raw": "{\n  \"content\": \"Thank you for your prompt response.\",\n  \"targetLanguage\": \"French\",\n  \"referenceContext\": null\n}"
             }
           }
         },
@@ -190,7 +190,7 @@
             "url": { "raw": "{{baseUrl}}/api/email/summarize", "host": ["{{baseUrl}}"], "path": ["api", "email", "summarize"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"content\": \"Paste a long email thread here to get a concise summary of the key points and action items.\"\n}"
+              "raw": "{\n  \"content\": \"Paste a long email thread here to get a concise summary of the key points and action items.\",\n  \"referenceContext\": null\n}"
             }
           }
         },
@@ -202,7 +202,7 @@
             "url": { "raw": "{{baseUrl}}/api/email/subject", "host": ["{{baseUrl}}"], "path": ["api", "email", "subject"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"content\": \"I wanted to follow up on the proposal I sent last week regarding the Q3 marketing budget.\"\n}"
+              "raw": "{\n  \"content\": \"I wanted to follow up on the proposal I sent last week regarding the Q3 marketing budget.\",\n  \"referenceContext\": null\n}"
             }
           }
         },
@@ -214,7 +214,7 @@
             "url": { "raw": "{{baseUrl}}/api/email/followup", "host": ["{{baseUrl}}"], "path": ["api", "email", "followup"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"originalContent\": \"Hi team, sharing the Q3 proposal for review, let me know your thoughts.\",\n  \"instructions\": \"It's been a week with no response\"\n}"
+              "raw": "{\n  \"originalContent\": \"Hi team, sharing the Q3 proposal for review, let me know your thoughts.\",\n  \"instructions\": \"It's been a week with no response\",\n  \"referenceContext\": null\n}"
             }
           }
         },
@@ -226,8 +226,22 @@
             "url": { "raw": "{{baseUrl}}/api/email/custom", "host": ["{{baseUrl}}"], "path": ["api", "email", "custom"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"requestType\": \"COLD_OUTREACH\",\n  \"context\": \"Introducing our new analytics product to a mid-market SaaS company\",\n  \"customPrompt\": \"Mention our 20% launch discount\",\n  \"promptTemplateId\": null\n}"
+              "raw": "{\n  \"requestType\": \"COLD_OUTREACH\",\n  \"context\": \"Introducing our new analytics product to a mid-market SaaS company\",\n  \"customPrompt\": \"Mention our 20% launch discount\",\n  \"promptTemplateId\": null,\n  \"referenceContext\": null\n}"
             }
+          }
+        },
+        {
+          "name": "Upload File (Extract Text)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/email/extract", "host": ["{{baseUrl}}"], "path": ["api", "email", "extract"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [] }
+              ]
+            },
+            "description": "Select a PDF, Word, or plain-text file for the 'file' field. Returns extracted text you can paste into any other /api/email/* request."
           }
         }
       ]

@@ -36,14 +36,14 @@ class EmailRequestValidationTest {
 
     @Test
     void emailImproveRequest_withValidRewriteStyle_hasNoViolations() {
-        EmailImproveRequest request = new EmailImproveRequest("Some content", RequestType.PROFESSIONAL_REWRITE);
+        EmailImproveRequest request = new EmailImproveRequest("Some content", RequestType.PROFESSIONAL_REWRITE, null);
 
         assertThat(validator.validate(request)).isEmpty();
     }
 
     @Test
     void emailImproveRequest_withOutOfFamilyStyle_isRejected() {
-        EmailImproveRequest request = new EmailImproveRequest("Some content", RequestType.SALES);
+        EmailImproveRequest request = new EmailImproveRequest("Some content", RequestType.SALES, null);
 
         Set<ConstraintViolation<EmailImproveRequest>> violations = validator.validate(request);
 
@@ -53,18 +53,34 @@ class EmailRequestValidationTest {
 
     @Test
     void emailCustomRequest_withValidGeneratorType_hasNoViolations() {
-        EmailCustomRequest request = new EmailCustomRequest(RequestType.COLD_OUTREACH, "Reach out about our product", null, null);
+        EmailCustomRequest request = new EmailCustomRequest(RequestType.COLD_OUTREACH, "Reach out about our product", null, null, null);
 
         assertThat(validator.validate(request)).isEmpty();
     }
 
     @Test
     void emailCustomRequest_withRequestTypeBelongingToAnotherEndpoint_isRejected() {
-        EmailCustomRequest request = new EmailCustomRequest(RequestType.TRANSLATE, "Some context", null, null);
+        EmailCustomRequest request = new EmailCustomRequest(RequestType.TRANSLATE, "Some context", null, null, null);
 
         Set<ConstraintViolation<EmailCustomRequest>> violations = validator.validate(request);
 
         assertThat(violations).isNotEmpty();
         assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("requestType"));
+    }
+
+    @Test
+    void emailGenerateRequest_withReferenceContextOverLimit_isRejected() {
+        EmailGenerateRequest request = new EmailGenerateRequest("Some content", null, null, "A".repeat(20_001));
+
+        Set<ConstraintViolation<EmailGenerateRequest>> violations = validator.validate(request);
+
+        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("referenceContext"));
+    }
+
+    @Test
+    void emailGenerateRequest_withoutReferenceContext_hasNoViolations() {
+        EmailGenerateRequest request = new EmailGenerateRequest("Some content", null, null, null);
+
+        assertThat(validator.validate(request)).isEmpty();
     }
 }

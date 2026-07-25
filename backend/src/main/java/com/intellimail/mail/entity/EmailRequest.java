@@ -48,6 +48,10 @@ public class EmailRequest extends BaseEntity {
     @Column(name = "target_language", length = 40)
     private String targetLanguage;
 
+    /** Background context (e.g. text extracted from an uploaded file) — never the content being acted on itself. */
+    @Column(name = "reference_context", columnDefinition = "TEXT")
+    private String referenceContext;
+
     // Matches migration V4's ON DELETE SET NULL exactly, so Hibernate's auto-generated
     // test schema (H2, ddl-auto=create-drop) behaves the same as the Flyway-managed
     // production schema instead of falling back to the default RESTRICT/NO ACTION -

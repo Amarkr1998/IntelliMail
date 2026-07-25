@@ -52,6 +52,7 @@ erDiagram
         text original_content
         text instructions
         string target_language
+        text reference_context "background info only, e.g. from an uploaded file"
         uuid prompt_template_id FK "nullable"
     }
 

@@ -12,6 +12,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -94,6 +95,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnauthorizedActionException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnauthorizedAction(UnauthorizedActionException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(FileProcessingException.class)
+    public ResponseEntity<ApiResponse<Void>> handleFileProcessing(FileProcessingException ex) {
+        log.warn("File processing failed: {}", ex.getMessage());
+        return ResponseEntity.badRequest().body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(ApiResponse.error("Uploaded file is too large. Maximum size is 10 MB."));
     }
 
     @ExceptionHandler(AiGenerationException.class)

@@ -12,6 +12,9 @@ public record EmailTranslateRequest(
 
         @NotBlank(message = "Target language is required")
         @Size(max = 40, message = "Target language must not exceed 40 characters")
-        String targetLanguage
+        String targetLanguage,
+
+        @Size(max = 20_000, message = "Reference context must not exceed 20,000 characters")
+        String referenceContext
 ) {
 }

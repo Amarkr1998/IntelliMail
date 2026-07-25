@@ -67,7 +67,7 @@ See [`docs/project-structure.md`](docs/project-structure.md) for the full packag
 
 ## Core Features
 
-AI email reply generation, professional/friendly/formal/casual rewriting, grammar correction, summarization, translation, subject line generation, expand/shorten, follow-up emails, meeting requests, thank-you/apology/sales/HR/marketing/cold-outreach generators, custom AI prompts, reply regeneration, response history, favorite replies, reusable prompt templates, and usage analytics.
+AI email reply generation, professional/friendly/formal/casual rewriting, grammar correction, summarization, translation, subject line generation, expand/shorten, follow-up emails, meeting requests, thank-you/apology/sales/HR/marketing/cold-outreach generators, custom AI prompts, reply regeneration, response history, favorite replies, reusable prompt templates, usage analytics, and file upload (PDF/Word/plain text) text extraction to seed any AI action.
 
 ## Testing
 

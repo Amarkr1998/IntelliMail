@@ -67,7 +67,7 @@ class EmailGenerationIntegrationTest {
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new EmailGenerateRequest("Can we meet Tuesday at 3pm?", null, null))))
+                                new EmailGenerateRequest("Can we meet Tuesday at 3pm?", null, null, null))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content").value("Sure, Tuesday at 3pm works."))
                 .andExpect(jsonPath("$.data.requestType").value("GENERATE_REPLY"))
@@ -78,7 +78,7 @@ class EmailGenerationIntegrationTest {
     void generate_withoutToken_isRejectedWithUnauthorized() throws Exception {
         mockMvc.perform(post("/api/email/generate")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new EmailGenerateRequest("content", null, null))))
+                        .content(objectMapper.writeValueAsString(new EmailGenerateRequest("content", null, null, null))))
                 .andExpect(status().isUnauthorized());
     }
 

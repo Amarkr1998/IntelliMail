@@ -11,6 +11,9 @@ public record EmailFollowupRequest(
         String originalContent,
 
         @Size(max = 2_000, message = "Instructions must not exceed 2,000 characters")
-        String instructions
+        String instructions,
+
+        @Size(max = 20_000, message = "Reference context must not exceed 20,000 characters")
+        String referenceContext
 ) {
 }

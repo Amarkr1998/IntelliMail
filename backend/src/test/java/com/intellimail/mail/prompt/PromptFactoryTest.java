@@ -68,4 +68,35 @@ class PromptFactoryTest {
 
         assertThat(prompt.userPrompt()).contains("Mention our 20% launch discount");
     }
+
+    @Test
+    void withReferenceContext_appendsItAsALabeledBlock_withoutTouchingTheSystemPrompt() {
+        PreparedPrompt base = promptFactory.forGenerateReply("Can we confirm the meeting?", null, null);
+
+        PreparedPrompt augmented = promptFactory.withReferenceContext(
+                base, "Our pricing: Basic $10/mo, Pro $30/mo.");
+
+        assertThat(augmented.systemPrompt()).isEqualTo(base.systemPrompt());
+        assertThat(augmented.userPrompt()).contains("Can we confirm the meeting?");
+        assertThat(augmented.userPrompt()).contains("Reference material");
+        assertThat(augmented.userPrompt()).contains("Our pricing: Basic $10/mo, Pro $30/mo.");
+    }
+
+    @Test
+    void withReferenceContext_returnsThePromptUnchanged_whenReferenceContextIsNull() {
+        PreparedPrompt base = promptFactory.forGenerateReply("Can we confirm the meeting?", null, null);
+
+        PreparedPrompt result = promptFactory.withReferenceContext(base, null);
+
+        assertThat(result).isEqualTo(base);
+    }
+
+    @Test
+    void withReferenceContext_returnsThePromptUnchanged_whenReferenceContextIsBlank() {
+        PreparedPrompt base = promptFactory.forGenerateReply("Can we confirm the meeting?", null, null);
+
+        PreparedPrompt result = promptFactory.withReferenceContext(base, "   ");
+
+        assertThat(result).isEqualTo(base);
+    }
 }

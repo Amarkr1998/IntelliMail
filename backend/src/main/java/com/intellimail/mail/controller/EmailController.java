@@ -8,24 +8,30 @@ import com.intellimail.mail.dto.email.EmailReplyResponse;
 import com.intellimail.mail.dto.email.EmailSubjectRequest;
 import com.intellimail.mail.dto.email.EmailSummarizeRequest;
 import com.intellimail.mail.dto.email.EmailTranslateRequest;
+import com.intellimail.mail.dto.email.FileExtractResponse;
 import com.intellimail.mail.security.UserPrincipal;
 import com.intellimail.mail.service.EmailService;
+import com.intellimail.mail.service.FileExtractionService;
 import com.intellimail.mail.util.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * The 20 core AI email-writing features, grouped into 7 endpoints per the
- * platform's REST API contract. Every endpoint requires authentication;
- * {@link EmailService} handles persistence, prompt selection, the Azure
- * OpenAI call, and usage-analytics recording.
+ * platform's REST API contract, plus a file-upload text-extraction endpoint.
+ * Every endpoint requires authentication; {@link EmailService} handles
+ * persistence, prompt selection, the Azure OpenAI call, and usage-analytics
+ * recording.
  */
 @RestController
 @RequestMapping("/api/email")
@@ -34,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class EmailController {
 
     private final EmailService emailService;
+    private final FileExtractionService fileExtractionService;
 
     @PostMapping("/generate")
     @Operation(summary = "Generate an AI reply", description = "Drafts a reply to an existing email thread.")
@@ -84,5 +91,14 @@ public class EmailController {
     public ApiResponse<EmailReplyResponse> custom(@AuthenticationPrincipal UserPrincipal principal,
                                                     @Valid @RequestBody EmailCustomRequest request) {
         return ApiResponse.success(emailService.custom(principal.getId(), request));
+    }
+
+    @PostMapping(value = "/extract", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Extract text from an uploaded file",
+            description = "Accepts PDF, Word, plain text, HTML and other common formats (max 10 MB) and returns the "
+                    + "extracted text, ready to feed into any other /api/email/* action as originalContent/content/context. "
+                    + "Does not itself call the AI or persist anything.")
+    public ApiResponse<FileExtractResponse> extract(@RequestParam("file") MultipartFile file) {
+        return ApiResponse.success(fileExtractionService.extractText(file));
     }
 }

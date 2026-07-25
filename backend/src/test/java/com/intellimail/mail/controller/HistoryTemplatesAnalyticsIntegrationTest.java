@@ -104,7 +104,7 @@ class HistoryTemplatesAnalyticsIntegrationTest {
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new EmailGenerateRequest("Reaching out about a partnership", null, UUID.fromString(templateId)))))
+                                new EmailGenerateRequest("Reaching out about a partnership", null, UUID.fromString(templateId), null))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.attemptNumber").value(1))
                 .andReturn().getResponse().getContentAsString();

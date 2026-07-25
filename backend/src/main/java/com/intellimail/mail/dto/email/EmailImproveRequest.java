@@ -20,6 +20,9 @@ public record EmailImproveRequest(
 
         @NotNull(message = "Rewrite style is required")
         @ValidRewriteStyle
-        RequestType style
+        RequestType style,
+
+        @Size(max = 20_000, message = "Reference context must not exceed 20,000 characters")
+        String referenceContext
 ) {
 }

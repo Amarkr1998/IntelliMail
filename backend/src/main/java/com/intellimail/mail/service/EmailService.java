@@ -62,11 +62,13 @@ public class EmailService {
                 .requestType(RequestType.GENERATE_REPLY)
                 .originalContent(request.originalContent())
                 .instructions(request.instructions())
+                .referenceContext(request.referenceContext())
                 .promptTemplate(template)
                 .build());
 
         PreparedPrompt prompt = promptFactory.forGenerateReply(
                 request.originalContent(), request.instructions(), templateSystemPrompt(template));
+        prompt = promptFactory.withReferenceContext(prompt, request.referenceContext());
 
         return executeAndPersist(emailRequest, prompt, 1);
     }
@@ -79,9 +81,11 @@ public class EmailService {
                 .user(user)
                 .requestType(request.style())
                 .originalContent(request.content())
+                .referenceContext(request.referenceContext())
                 .build());
 
         PreparedPrompt prompt = promptFactory.forRewrite(request.style(), request.content(), null);
+        prompt = promptFactory.withReferenceContext(prompt, request.referenceContext());
         return executeAndPersist(emailRequest, prompt, 1);
     }
 
@@ -94,9 +98,11 @@ public class EmailService {
                 .requestType(RequestType.TRANSLATE)
                 .originalContent(request.content())
                 .targetLanguage(request.targetLanguage())
+                .referenceContext(request.referenceContext())
                 .build());
 
         PreparedPrompt prompt = promptFactory.forTranslate(request.content(), request.targetLanguage());
+        prompt = promptFactory.withReferenceContext(prompt, request.referenceContext());
         return executeAndPersist(emailRequest, prompt, 1);
     }
 
@@ -108,9 +114,11 @@ public class EmailService {
                 .user(user)
                 .requestType(RequestType.SUMMARIZE)
                 .originalContent(request.content())
+                .referenceContext(request.referenceContext())
                 .build());
 
         PreparedPrompt prompt = promptFactory.forSummarize(request.content());
+        prompt = promptFactory.withReferenceContext(prompt, request.referenceContext());
         return executeAndPersist(emailRequest, prompt, 1);
     }
 
@@ -122,9 +130,11 @@ public class EmailService {
                 .user(user)
                 .requestType(RequestType.SUBJECT_LINE)
                 .originalContent(request.content())
+                .referenceContext(request.referenceContext())
                 .build());
 
         PreparedPrompt prompt = promptFactory.forSubjectLine(request.content());
+        prompt = promptFactory.withReferenceContext(prompt, request.referenceContext());
         return executeAndPersist(emailRequest, prompt, 1);
     }
 
@@ -137,9 +147,11 @@ public class EmailService {
                 .requestType(RequestType.FOLLOWUP)
                 .originalContent(request.originalContent())
                 .instructions(request.instructions())
+                .referenceContext(request.referenceContext())
                 .build());
 
         PreparedPrompt prompt = promptFactory.forFollowup(request.originalContent(), request.instructions());
+        prompt = promptFactory.withReferenceContext(prompt, request.referenceContext());
         return executeAndPersist(emailRequest, prompt, 1);
     }
 
@@ -153,11 +165,13 @@ public class EmailService {
                 .requestType(request.requestType())
                 .originalContent(request.context())
                 .instructions(request.customPrompt())
+                .referenceContext(request.referenceContext())
                 .promptTemplate(template)
                 .build());
 
         PreparedPrompt prompt = promptFactory.forCustomGenerator(
                 request.requestType(), request.context(), request.customPrompt(), templateSystemPrompt(template));
+        prompt = promptFactory.withReferenceContext(prompt, request.referenceContext());
 
         return executeAndPersist(emailRequest, prompt, 1);
     }
@@ -180,6 +194,7 @@ public class EmailService {
         int nextAttempt = (maxAttempt == null ? 0 : maxAttempt) + 1;
 
         PreparedPrompt prompt = buildPromptForExistingRequest(emailRequest);
+        prompt = promptFactory.withReferenceContext(prompt, emailRequest.getReferenceContext());
         return executeAndPersist(emailRequest, prompt, nextAttempt);
     }
 

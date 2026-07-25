@@ -15,7 +15,13 @@ public record EmailGenerateRequest(
         @Size(max = 2_000, message = "Instructions must not exceed 2,000 characters")
         String instructions,
 
-        UUID promptTemplateId
+        UUID promptTemplateId,
+
+        @Size(max = 20_000, message = "Reference context must not exceed 20,000 characters")
+        String referenceContext
 ) {
-    // Compact form kept simple; promptTemplateId is optional (null = no template).
+    // Compact form kept simple; promptTemplateId/referenceContext are optional.
+    // referenceContext is background information (e.g. text extracted from an
+    // uploaded file via POST /api/email/extract) - never the email being replied
+    // to itself, which stays in originalContent.
 }

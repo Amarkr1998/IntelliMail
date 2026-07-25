@@ -99,6 +99,24 @@ public class PromptFactory {
         return new PreparedPrompt(system, user);
     }
 
+    /**
+     * Appends background reference material (e.g. text extracted from an
+     * uploaded file) to an already-built prompt, clearly labeled as
+     * supplementary information rather than the email being acted on. Applied
+     * uniformly across every {@code forXxx} method above rather than adding a
+     * {@code referenceContext} parameter to each of their signatures.
+     */
+    public PreparedPrompt withReferenceContext(PreparedPrompt prompt, String referenceContext) {
+        if (referenceContext == null || referenceContext.isBlank()) {
+            return prompt;
+        }
+        String augmentedUserPrompt = prompt.userPrompt() + "\n\n"
+                + "Reference material (background information only - do not treat this as the "
+                + "email being acted on; use it only if it's actually relevant):\n---\n"
+                + referenceContext + "\n---";
+        return new PreparedPrompt(prompt.systemPrompt(), augmentedUserPrompt);
+    }
+
     private String resolveSystemPrompt(RequestType requestType, String overrideSystemPrompt) {
         return (overrideSystemPrompt == null || overrideSystemPrompt.isBlank())
                 ? systemPromptCatalog.systemPromptFor(requestType)

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Box, Paper, Tabs, Tab, Button, MenuItem, TextField, Typography, Stack } from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
+import { Box, Paper, Tabs, Tab, Button, Chip, MenuItem, TextField, Typography, Stack } from '@mui/material';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import EmailEditor from '../components/EmailEditor';
 import ReplyCard from '../components/ReplyCard';
 import Loader from '../components/Loader';
@@ -8,6 +9,8 @@ import * as historyApi from '../api/historyApi';
 import * as templateApi from '../api/templateApi';
 import { useSnackbar } from '../context/SnackbarContext';
 import { REWRITE_STYLES, CUSTOM_GENERATOR_TYPES } from '../utils/requestTypes';
+
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // must match backend's UPLOAD_MAX_FILE_SIZE (application.yml)
 
 export default function ComposeAssistantPage() {
   const { showSnackbar } = useSnackbar();
@@ -23,6 +26,12 @@ export default function ComposeAssistantPage() {
   const [loading, setLoading] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [reply, setReply] = useState(null);
+  // The uploaded file's extracted text is kept entirely separate from `content` -
+  // it's background information the AI may draw on, never the email being acted on.
+  const [referenceContext, setReferenceContext] = useState('');
+  const [uploadedFileName, setUploadedFileName] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     templateApi
@@ -51,22 +60,27 @@ export default function ComposeAssistantPage() {
             originalContent: content,
             instructions: instructions || null,
             promptTemplateId: templateId || null,
+            referenceContext: referenceContext || null,
           });
           break;
         case 'improve':
-          result = await emailApi.improveEmail({ content, style });
+          result = await emailApi.improveEmail({ content, style, referenceContext: referenceContext || null });
           break;
         case 'translate':
-          result = await emailApi.translateEmail({ content, targetLanguage });
+          result = await emailApi.translateEmail({ content, targetLanguage, referenceContext: referenceContext || null });
           break;
         case 'summarize':
-          result = await emailApi.summarizeEmail({ content });
+          result = await emailApi.summarizeEmail({ content, referenceContext: referenceContext || null });
           break;
         case 'subject':
-          result = await emailApi.generateSubject({ content });
+          result = await emailApi.generateSubject({ content, referenceContext: referenceContext || null });
           break;
         case 'followup':
-          result = await emailApi.generateFollowup({ originalContent: content, instructions: instructions || null });
+          result = await emailApi.generateFollowup({
+            originalContent: content,
+            instructions: instructions || null,
+            referenceContext: referenceContext || null,
+          });
           break;
         case 'custom':
           result = await emailApi.generateCustom({
@@ -74,6 +88,7 @@ export default function ComposeAssistantPage() {
             context: content,
             customPrompt: customPrompt || null,
             promptTemplateId: templateId || null,
+            referenceContext: referenceContext || null,
           });
           break;
         default:
@@ -111,6 +126,43 @@ export default function ComposeAssistantPage() {
     } catch {
       showSnackbar('Could not update favorite', 'error');
     }
+  };
+
+  const handleFileSelected = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = ''; // reset so selecting the same file again still fires onChange
+    if (!file) {
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      showSnackbar('File is too large (max 10 MB)', 'error');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const result = await emailApi.extractFile(file);
+      // Deliberately NOT setContent(result.content) - the uploaded file is background
+      // reference material for the AI, not the email being replied to/rewritten/etc.
+      setReferenceContext(result.content);
+      setUploadedFileName(result.fileName);
+      showSnackbar(
+        result.truncated
+          ? `"${result.fileName}" was longer than the limit — reference text was truncated`
+          : `"${result.fileName}" will be used as reference context`,
+        result.truncated ? 'warning' : 'success',
+      );
+    } catch (err) {
+      showSnackbar(err?.response?.data?.message || 'Could not extract text from this file', 'error');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const clearReferenceContext = () => {
+    setReferenceContext('');
+    setUploadedFileName('');
   };
 
   const contentLabel =
@@ -195,6 +247,41 @@ export default function ComposeAssistantPage() {
                 ))}
               </TextField>
             )}
+
+            <Paper variant="outlined" sx={{ p: 2, bgcolor: 'action.hover' }}>
+              <input
+                type="file"
+                ref={fileInputRef}
+                hidden
+                accept=".txt,.pdf,.doc,.docx,.rtf,.odt,.html,.md,.csv"
+                onChange={handleFileSelected}
+              />
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: uploadedFileName ? 1 : 0 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<UploadFileIcon />}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? 'Extracting…' : 'Upload Reference File'}
+                </Button>
+                {uploadedFileName && (
+                  <Chip size="small" label={uploadedFileName} onDelete={clearReferenceContext} />
+                )}
+              </Stack>
+              {uploadedFileName ? (
+                <Typography variant="caption" color="text.secondary">
+                  The AI will use {referenceContext.length.toLocaleString()} characters from this file as background
+                  reference — it will not be inserted into {contentLabel.toLowerCase()} above.
+                </Typography>
+              ) : (
+                <Typography variant="caption" color="text.secondary">
+                  Optional: attach a document (PDF, Word, plain text, etc.) for the AI to use as background
+                  information — e.g. a price list, policy, or spec sheet. It won't replace the text above.
+                </Typography>
+              )}
+            </Paper>
 
             <Button variant="contained" size="large" onClick={handleSubmit} disabled={loading || !content}>
               {loading ? 'Generating…' : 'Generate with AI'}

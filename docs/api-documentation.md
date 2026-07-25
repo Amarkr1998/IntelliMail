@@ -53,17 +53,20 @@ All 20 core AI features are exposed through these 7 endpoints. `RequestType` is 
 
 | Method | Path | Request Body | Covers |
 |---|---|---|---|
-| POST | `/api/email/generate` | `{ originalContent, instructions?, promptTemplateId? }` | AI Email Reply Generation |
-| POST | `/api/email/improve` | `{ content, style }` | Professional/Friendly/Formal/Casual Rewrite, Grammar Correction, Expand, Shorten |
-| POST | `/api/email/translate` | `{ content, targetLanguage }` | Email Translation |
-| POST | `/api/email/summarize` | `{ content }` | Email Summarization |
-| POST | `/api/email/subject` | `{ content }` | Subject Line Generator |
-| POST | `/api/email/followup` | `{ originalContent, instructions? }` | Follow-up Email Generator |
-| POST | `/api/email/custom` | `{ requestType, context, customPrompt?, promptTemplateId? }` | Meeting Request, Thank You, Apology, Sales, HR, Marketing, Cold Outreach, Custom AI Prompt |
+| POST | `/api/email/generate` | `{ originalContent, instructions?, promptTemplateId?, referenceContext? }` | AI Email Reply Generation |
+| POST | `/api/email/improve` | `{ content, style, referenceContext? }` | Professional/Friendly/Formal/Casual Rewrite, Grammar Correction, Expand, Shorten |
+| POST | `/api/email/translate` | `{ content, targetLanguage, referenceContext? }` | Email Translation |
+| POST | `/api/email/summarize` | `{ content, referenceContext? }` | Email Summarization |
+| POST | `/api/email/subject` | `{ content, referenceContext? }` | Subject Line Generator |
+| POST | `/api/email/followup` | `{ originalContent, instructions?, referenceContext? }` | Follow-up Email Generator |
+| POST | `/api/email/custom` | `{ requestType, context, customPrompt?, promptTemplateId?, referenceContext? }` | Meeting Request, Thank You, Apology, Sales, HR, Marketing, Cold Outreach, Custom AI Prompt |
+| POST | `/api/email/extract` | `multipart/form-data`, field `file` | File Upload — extracts text from an uploaded file to use as `referenceContext` on any of the above |
 
 `style` (for `/improve`) must be one of: `PROFESSIONAL_REWRITE`, `FRIENDLY_REWRITE`, `FORMAL_REWRITE`, `CASUAL_REWRITE`, `GRAMMAR_CORRECTION`, `EXPAND`, `SHORTEN`.
 
 `requestType` (for `/custom`) must be one of: `MEETING_REQUEST`, `THANK_YOU`, `APOLOGY`, `SALES`, `HR`, `MARKETING`, `COLD_OUTREACH`, `CUSTOM_PROMPT`.
+
+`referenceContext` (optional, max 20,000 characters, on every endpoint above) is **background information the AI may draw on — never the content being acted on itself**. It's the natural home for text extracted via `/api/email/extract`: e.g. attach a product spec sheet or pricing document, and it informs the reply without being mistaken for the email being replied to. Persisted on the `EmailRequest` row, so Reply Regeneration reuses the same reference material as the original attempt.
 
 **Response (`EmailReplyResponse`):**
 ```json
@@ -73,6 +76,24 @@ All 20 core AI features are exposed through these 7 endpoints. `RequestType` is 
   "totalTokens": 87, "latencyMs": 812, "favorite": false, "createdAt": "..."
 }
 ```
+
+### File Upload (`/api/email/extract`)
+
+Accepts PDF, Word (`.doc`/`.docx`), plain text, RTF, HTML, and most other common text-bearing formats (detected automatically via Apache Tika — the `accept` hint in the upload picker is just a suggestion, not an enforced allowlist). Max file size **10 MB** (`UPLOAD_MAX_FILE_SIZE`, see [`environment-variables.md`](environment-variables.md)). This endpoint never calls the AI and never persists anything itself — it only returns text, which the caller then submits as `referenceContext` (**not** `originalContent`/`content`) on any other `/api/email/*` endpoint.
+
+**Request:** `multipart/form-data` with a single `file` field.
+
+**Response (`FileExtractResponse`):**
+```json
+{
+  "fileName": "meeting-notes.pdf",
+  "content": "...",
+  "characterCount": 1842,
+  "truncated": false
+}
+```
+
+If the extracted text exceeds 20,000 characters (the same cap as `originalContent`/`content` on every other `/api/email/*` request), it's truncated and `truncated` is `true` rather than the request failing.
 
 ## History (includes Reply Regeneration & Favorite Replies)
 
