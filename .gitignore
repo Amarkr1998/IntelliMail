@@ -10,3 +10,8 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Docker Compose secrets (real values) - only .env.example is tracked
+/.env
+deploy/backups/
+deploy/.deploy-history

@@ -47,6 +47,13 @@ public class PromptFactory {
             ---
             {customPromptBlock}""";
 
+    private static final String VOICE_COMMAND_TEMPLATE = """
+            Voice transcript:
+            ---
+            {transcript}
+            ---
+            {languageBlock}""";
+
     private final SystemPromptCatalog systemPromptCatalog;
 
     public PreparedPrompt forGenerateReply(String originalContent, String instructions, String overrideSystemPrompt) {
@@ -99,6 +106,15 @@ public class PromptFactory {
         return new PreparedPrompt(system, user);
     }
 
+    /** Builds the prompt for a speech-to-text voice command; {@code language} (e.g. "English (US)") is optional and steers the reply's language. */
+    public PreparedPrompt forVoiceCommand(String transcript, String language) {
+        String system = systemPromptCatalog.systemPromptFor(RequestType.VOICE_COMMAND);
+        String user = new PromptTemplate(VOICE_COMMAND_TEMPLATE).render(Map.of(
+                "transcript", transcript,
+                "languageBlock", languageBlock(language)));
+        return new PreparedPrompt(system, user);
+    }
+
     /**
      * Appends background reference material (e.g. text extracted from an
      * uploaded file) to an already-built prompt, clearly labeled as
@@ -133,5 +149,11 @@ public class PromptFactory {
         return (customPrompt == null || customPrompt.isBlank())
                 ? ""
                 : "Additional instructions from the user: " + customPrompt;
+    }
+
+    private String languageBlock(String language) {
+        return (language == null || language.isBlank())
+                ? ""
+                : "Respond in " + language + ".";
     }
 }

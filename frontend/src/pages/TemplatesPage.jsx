@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   Box,
-  Typography,
   Button,
   Paper,
   List,
@@ -17,13 +16,18 @@ import {
   Chip,
   Stack,
 } from '@mui/material';
+import { motion } from 'framer-motion';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import ArticleIcon from '@mui/icons-material/Article';
 import * as templateApi from '../api/templateApi';
 import Loader from '../components/Loader';
+import PageHeader from '../components/common/PageHeader';
+import EmptyState from '../components/common/EmptyState';
 import { useSnackbar } from '../context/SnackbarContext';
 import { REQUEST_TYPE_LABELS } from '../utils/requestTypes';
+import { useReducedMotionSafe } from '../theme/motion';
 
 const emptyForm = {
   id: null,
@@ -42,6 +46,7 @@ export default function TemplatesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const { staggerContainer, fadeInUp } = useReducedMotionSafe();
 
   const load = useCallback(() => {
     setLoading(true);
@@ -108,53 +113,66 @@ export default function TemplatesPage() {
 
   return (
     <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-        <Typography variant="h4" fontWeight={700}>
-          Prompt Templates
-        </Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-          New Template
-        </Button>
-      </Stack>
+      <PageHeader
+        title="Prompt Templates"
+        subtitle="Save and reuse your favorite AI prompts."
+        action={
+          <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
+            New Template
+          </Button>
+        }
+      />
 
-      <Paper variant="outlined">
-        <List disablePadding>
-          {data?.content.map((template) => (
-            <ListItem
-              key={template.id}
-              divider
-              secondaryAction={
-                <>
-                  <IconButton onClick={() => openEdit(template)} aria-label="Edit template">
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(template.id)} aria-label="Delete template">
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </>
-              }
-            >
-              <ListItemText
-                primary={
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography fontWeight={600}>{template.name}</Typography>
-                    <Chip size="small" label={REQUEST_TYPE_LABELS[template.category] || template.category} />
-                    {template.isPublic && <Chip size="small" color="secondary" label="Public" />}
-                  </Stack>
+      {data?.content.length === 0 ? (
+        <EmptyState
+          icon={<ArticleIcon />}
+          title="No templates yet"
+          description="Create one to reuse your favorite prompts across the Compose Assistant."
+          action={
+            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={openCreate}>
+              New Template
+            </Button>
+          }
+        />
+      ) : (
+        <Paper variant="outlined" component={motion.div} initial="initial" animate="animate" variants={staggerContainer}>
+          <List disablePadding>
+            {data?.content.map((template, index) => (
+              <ListItem
+                key={template.id}
+                divider={index !== data.content.length - 1}
+                component={motion.div}
+                variants={fadeInUp}
+                sx={{
+                  transition: 'background-color 0.15s ease',
+                  '&:hover': { bgcolor: 'action.hover' },
+                }}
+                secondaryAction={
+                  <>
+                    <IconButton onClick={() => openEdit(template)} aria-label="Edit template">
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton onClick={() => handleDelete(template.id)} aria-label="Delete template">
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </>
                 }
-                secondary={template.description}
-              />
-            </ListItem>
-          ))}
-          {data?.content.length === 0 && (
-            <Box sx={{ p: 3 }}>
-              <Typography color="text.secondary">
-                No templates yet — create one to reuse your favorite prompts.
-              </Typography>
-            </Box>
-          )}
-        </List>
-      </Paper>
+              >
+                <ListItemText
+                  primary={
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Box sx={{ fontWeight: 600 }}>{template.name}</Box>
+                      <Chip size="small" label={REQUEST_TYPE_LABELS[template.category] || template.category} />
+                      {template.isPublic && <Chip size="small" color="secondary" label="Public" />}
+                    </Stack>
+                  }
+                  secondary={template.description}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Paper>
+      )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>{form.id ? 'Edit Template' : 'New Template'}</DialogTitle>

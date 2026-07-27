@@ -25,6 +25,7 @@ import static com.intellimail.mail.enums.RequestType.SUBJECT_LINE;
 import static com.intellimail.mail.enums.RequestType.SUMMARIZE;
 import static com.intellimail.mail.enums.RequestType.THANK_YOU;
 import static com.intellimail.mail.enums.RequestType.TRANSLATE;
+import static com.intellimail.mail.enums.RequestType.VOICE_COMMAND;
 
 /**
  * Hand-authored system prompts, one per {@link RequestType}. This is the
@@ -84,7 +85,12 @@ public class SystemPromptCatalog {
             Map.entry(COLD_OUTREACH, BASE_PERSONA
                     + " Draft a concise, personalized cold outreach email based on the context below, aimed at starting a conversation rather than closing a deal."),
             Map.entry(CUSTOM_PROMPT, BASE_PERSONA
-                    + " Draft an email based on the context and instructions below.")
+                    + " Draft an email based on the context and instructions below."),
+            Map.entry(VOICE_COMMAND, BASE_PERSONA
+                    + " The text below was transcribed from the user's spoken voice input rather than typed, so it "
+                    + "may contain minor speech-recognition errors - interpret intent charitably. If it asks you to "
+                    + "draft, rewrite, translate, or summarize an email, return the ready-to-send email text. "
+                    + "Otherwise, answer the question or request directly and concisely in plain conversational text.")
     );
 
     public String systemPromptFor(RequestType requestType) {

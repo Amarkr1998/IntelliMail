@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
 export const ACCESS_TOKEN_KEY = 'intellimail_access_token';
 export const REFRESH_TOKEN_KEY = 'intellimail_refresh_token';

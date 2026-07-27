@@ -11,6 +11,7 @@ erDiagram
     USERS ||--o{ FEEDBACK : gives
     USERS ||--o{ USAGE_ANALYTICS : generates
     USERS ||--o{ AUDIT_LOGS : "acts (nullable)"
+    USERS ||--o{ VOICE_INTERACTIONS : speaks
     PROMPT_TEMPLATES |o--o{ EMAIL_REQUESTS : "optionally used by"
     EMAIL_REQUESTS ||--o{ GENERATED_REPLIES : produces
     GENERATED_REPLIES ||--o{ FEEDBACK : receives
@@ -96,6 +97,19 @@ erDiagram
         text details
         string ip_address
     }
+
+    VOICE_INTERACTIONS {
+        uuid id PK
+        uuid user_id FK
+        text transcript "speech-to-text result, captured client-side"
+        text ai_response
+        string language "nullable - e.g. 'English (US)'"
+        string ai_model
+        int prompt_tokens
+        int completion_tokens
+        int total_tokens
+        bigint latency_ms
+    }
 ```
 
 ## Notable Design Decisions
@@ -105,3 +119,4 @@ erDiagram
 - **`UsageAnalytics` is independent of `EmailRequest`**, not derived from it. It's written even when the AI call fails (with `success = false` and an `error_message`), and it survives if the originating `EmailRequest` is later deleted via `DELETE /api/history/{id}` (no FK from `UsageAnalytics` back to `EmailRequest`).
 - **`AuditLog.user_id` is nullable** to support logging unauthenticated/system events (e.g. a failed login attempt against a real user id, or a future system-initiated action).
 - **No `Feedback` REST endpoint currently exists** (see [`future-enhancements.md`](future-enhancements.md)) — the table and repository are in place, ready for a `POST /api/history/replies/{id}/feedback` endpoint.
+- **`VoiceInteraction` is independent of `EmailRequest`**, not a subtype of it. A voice prompt is a single self-contained turn (no reply-attempt history or regeneration), and not every voice prompt is about drafting an email, so it doesn't fit the `EmailRequest`/`GeneratedReply` shape.

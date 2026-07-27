@@ -1,12 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Box, Typography, Paper, LinearProgress, Stack } from '@mui/material';
+import { Box, Typography, Paper, Stack } from '@mui/material';
+import { motion } from 'framer-motion';
+import DescriptionIcon from '@mui/icons-material/Description';
+import BoltIcon from '@mui/icons-material/Bolt';
+import SpeedIcon from '@mui/icons-material/Speed';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import * as analyticsApi from '../api/analyticsApi';
 import Loader from '../components/Loader';
+import PageHeader from '../components/common/PageHeader';
+import StatCard from '../components/common/StatCard';
+import EmptyState from '../components/common/EmptyState';
+import AnalyticsBarChart from '../components/charts/AnalyticsBarChart';
 import { REQUEST_TYPE_LABELS } from '../utils/requestTypes';
+import { useReducedMotionSafe } from '../theme/motion';
 
 export default function AnalyticsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { staggerContainer, fadeInUp } = useReducedMotionSafe();
 
   useEffect(() => {
     analyticsApi
@@ -19,69 +30,64 @@ export default function AnalyticsPage() {
     return <Loader fullHeight />;
   }
 
-  const maxRequests = Math.max(1, ...(data?.breakdown.map((b) => b.totalRequests) || [1]));
+  const chartItems = data.breakdown.map((item) => ({
+    label: REQUEST_TYPE_LABELS[item.requestType] || item.requestType,
+    value: item.totalRequests,
+  }));
 
   return (
     <Box>
-      <Typography variant="h4" fontWeight={700} gutterBottom>
-        Usage Analytics
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        {new Date(data.from).toLocaleDateString()} – {new Date(data.to).toLocaleDateString()}
-      </Typography>
+      <PageHeader
+        title="Usage Analytics"
+        subtitle={`${new Date(data.from).toLocaleDateString()} – ${new Date(data.to).toLocaleDateString()}`}
+      />
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2, mb: 4 }}>
-        <Paper variant="outlined" sx={{ p: 3 }}>
-          <Typography variant="overline" color="text.secondary">
-            Total Requests
-          </Typography>
-          <Typography variant="h4" fontWeight={700}>
-            {data.totalRequests}
-          </Typography>
-        </Paper>
-        <Paper variant="outlined" sx={{ p: 3 }}>
-          <Typography variant="overline" color="text.secondary">
-            Total Tokens
-          </Typography>
-          <Typography variant="h4" fontWeight={700}>
-            {data.totalTokens}
-          </Typography>
-        </Paper>
-        <Paper variant="outlined" sx={{ p: 3 }}>
-          <Typography variant="overline" color="text.secondary">
-            Avg Latency
-          </Typography>
-          <Typography variant="h4" fontWeight={700}>
-            {Math.round(data.avgLatencyMs)} ms
-          </Typography>
-        </Paper>
+      <Box
+        component={motion.div}
+        initial="initial"
+        animate="animate"
+        variants={staggerContainer}
+        sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2, mb: 4 }}
+      >
+        <motion.div variants={fadeInUp}>
+          <StatCard label="Total Requests" value={data.totalRequests} icon={<DescriptionIcon fontSize="small" />} />
+        </motion.div>
+        <motion.div variants={fadeInUp}>
+          <StatCard label="Total Tokens" value={data.totalTokens} icon={<BoltIcon fontSize="small" />} accent="secondary" />
+        </motion.div>
+        <motion.div variants={fadeInUp}>
+          <StatCard label="Avg Latency" value={`${Math.round(data.avgLatencyMs)} ms`} icon={<SpeedIcon fontSize="small" />} />
+        </motion.div>
       </Box>
 
       <Typography variant="h6" gutterBottom>
         Breakdown by Feature
       </Typography>
-      <Paper variant="outlined" sx={{ p: 3 }}>
-        {data.breakdown.length === 0 && (
-          <Typography color="text.secondary">No usage recorded in this period yet.</Typography>
-        )}
-        <Stack spacing={2}>
-          {data.breakdown.map((item) => (
-            <Box key={item.requestType}>
-              <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
-                <Typography variant="body2">{REQUEST_TYPE_LABELS[item.requestType] || item.requestType}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {item.totalRequests} req &middot; {item.totalTokens} tok &middot; {Math.round(item.avgLatencyMs)} ms
-                </Typography>
-              </Stack>
-              <LinearProgress
-                variant="determinate"
-                value={(item.totalRequests / maxRequests) * 100}
-                sx={{ height: 8, borderRadius: 4 }}
-              />
-            </Box>
-          ))}
-        </Stack>
-      </Paper>
+
+      {data.breakdown.length === 0 ? (
+        <EmptyState icon={<BarChartIcon />} title="No usage recorded in this period yet" />
+      ) : (
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.1fr 0.9fr' }, gap: 3 }}>
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <AnalyticsBarChart items={chartItems} height={Math.max(280, chartItems.length * 44)} />
+          </Paper>
+
+          {/* Kept visible (not hidden behind hover-only tooltips) so the data stays
+              accessible without pointer interaction — the chart is a visual complement. */}
+          <Paper variant="outlined" sx={{ p: 3 }}>
+            <Stack spacing={2}>
+              {data.breakdown.map((item) => (
+                <Stack key={item.requestType} direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="body2">{REQUEST_TYPE_LABELS[item.requestType] || item.requestType}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {item.totalRequests} req &middot; {item.totalTokens} tok &middot; {Math.round(item.avgLatencyMs)} ms
+                  </Typography>
+                </Stack>
+              ))}
+            </Stack>
+          </Paper>
+        </Box>
+      )}
     </Box>
   );
 }

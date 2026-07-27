@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { Box, Typography, Paper, TextField, Button, Chip, Stack } from '@mui/material';
+import { Box, Typography, Paper, TextField, Button, Chip, Stack, Avatar } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { useSnackbar } from '../context/SnackbarContext';
 import * as userApi from '../api/userApi';
+import PageHeader from '../components/common/PageHeader';
 
 export default function ProfilePage() {
   const { user, refreshProfile } = useAuth();
@@ -31,17 +32,33 @@ export default function ProfilePage() {
 
   return (
     <Box>
-      <Typography variant="h4" fontWeight={700} gutterBottom>
-        Profile
-      </Typography>
+      <PageHeader title="Profile" subtitle="Your account details and preferences." />
       <Paper variant="outlined" sx={{ p: 3, maxWidth: 480 }}>
         <Stack spacing={2}>
-          <TextField label="Email" value={user?.email || ''} disabled fullWidth />
-          <Stack direction="row" spacing={1}>
-            {user?.roles?.map((role) => (
-              <Chip key={role} size="small" label={role} />
-            ))}
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Avatar
+              sx={{
+                width: 64,
+                height: 64,
+                fontSize: '1.5rem',
+                fontWeight: 700,
+                background: 'linear-gradient(135deg, #4F46E5 0%, #14B8A6 100%)',
+              }}
+            >
+              {user?.fullName?.charAt(0)?.toUpperCase() || '?'}
+            </Avatar>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={700}>
+                {user?.fullName}
+              </Typography>
+              <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
+                {user?.roles?.map((role) => (
+                  <Chip key={role} size="small" label={role} />
+                ))}
+              </Stack>
+            </Box>
           </Stack>
+          <TextField label="Email" value={user?.email || ''} disabled fullWidth />
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <TextField
               label="Full Name"

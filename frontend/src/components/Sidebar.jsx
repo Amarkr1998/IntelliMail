@@ -1,6 +1,8 @@
-import { Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar } from '@mui/material';
+import { Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, useMediaQuery } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import EditNoteIcon from '@mui/icons-material/EditNote';
+import MicIcon from '@mui/icons-material/Mic';
 import HistoryIcon from '@mui/icons-material/History';
 import ArticleIcon from '@mui/icons-material/Article';
 import BarChartIcon from '@mui/icons-material/BarChart';
@@ -12,39 +14,83 @@ export const drawerWidth = 220;
 const navItems = [
   { label: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
   { label: 'Compose Assistant', path: '/compose', icon: <EditNoteIcon /> },
+  { label: 'Voice AI', path: '/voice-ai', icon: <MicIcon /> },
   { label: 'History', path: '/history', icon: <HistoryIcon /> },
   { label: 'Templates', path: '/templates', icon: <ArticleIcon /> },
   { label: 'Analytics', path: '/analytics', icon: <BarChartIcon /> },
   { label: 'Settings', path: '/settings', icon: <SettingsIcon /> },
 ];
 
-export default function Sidebar() {
+function NavList({ onNavigate }) {
   const location = useLocation();
 
   return (
-    <Drawer
-      variant="permanent"
-      sx={{
-        width: drawerWidth,
-        flexShrink: 0,
-        '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box', borderRight: 1, borderColor: 'divider' },
-      }}
-    >
-      <Toolbar />
-      <List sx={{ px: 1 }}>
-        {navItems.map((item) => (
+    <List sx={{ px: 1.25 }}>
+      {navItems.map((item) => {
+        const selected = location.pathname === item.path;
+        return (
           <ListItemButton
             key={item.path}
             component={NavLink}
             to={item.path}
-            selected={location.pathname === item.path}
-            sx={{ borderRadius: 2, mb: 0.5 }}
+            selected={selected}
+            onClick={onNavigate}
+            sx={{
+              borderRadius: 2.5,
+              mb: 0.5,
+              minHeight: 44,
+              transition: 'background-color 0.18s ease, transform 0.18s ease, padding-left 0.18s ease',
+              '&:hover': { pl: 2 },
+              '& .MuiListItemIcon-root': { transition: 'transform 0.18s ease, color 0.18s ease' },
+              '&:hover .MuiListItemIcon-root': { transform: 'scale(1.12)' },
+              '&.Mui-selected': {
+                bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(129,140,248,0.16)' : 'rgba(79,70,229,0.1)'),
+                '&:hover': { bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(129,140,248,0.22)' : 'rgba(79,70,229,0.16)') },
+              },
+            }}
           >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.label} />
+            <ListItemIcon sx={{ color: selected ? 'primary.main' : 'inherit', minWidth: 40 }}>{item.icon}</ListItemIcon>
+            <ListItemText
+              primary={item.label}
+              slotProps={{ primary: { fontWeight: selected ? 700 : 500 } }}
+            />
           </ListItemButton>
-        ))}
-      </List>
+        );
+      })}
+    </List>
+  );
+}
+
+export default function Sidebar({ mobileOpen = false, onMobileClose }) {
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+
+  if (isDesktop) {
+    return (
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box', borderRight: 1, borderColor: 'divider' },
+        }}
+      >
+        <Toolbar />
+        <NavList />
+      </Drawer>
+    );
+  }
+
+  return (
+    <Drawer
+      variant="temporary"
+      open={mobileOpen}
+      onClose={onMobileClose}
+      ModalProps={{ keepMounted: true }}
+      sx={{ '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' } }}
+    >
+      <Toolbar />
+      <NavList onNavigate={onMobileClose} />
     </Drawer>
   );
 }

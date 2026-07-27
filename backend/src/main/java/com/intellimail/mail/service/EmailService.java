@@ -214,6 +214,9 @@ public class EmailService {
             case FOLLOWUP -> promptFactory.forFollowup(content, instructions);
             case MEETING_REQUEST, THANK_YOU, APOLOGY, SALES, HR, MARKETING, COLD_OUTREACH, CUSTOM_PROMPT ->
                     promptFactory.forCustomGenerator(type, content, instructions, overrideSystemPrompt);
+            // Voice prompts are persisted as VoiceInteraction rows (VoiceAiService), never as an
+            // EmailRequest, so this type can never actually reach an existing EmailRequest here.
+            case VOICE_COMMAND -> throw new IllegalStateException("VOICE_COMMAND is not a regenerable EmailRequest type");
         };
     }
 

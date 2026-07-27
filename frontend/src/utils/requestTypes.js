@@ -42,4 +42,5 @@ export const REQUEST_TYPE_LABELS = {
   MARKETING: 'Marketing',
   COLD_OUTREACH: 'Cold Outreach',
   CUSTOM_PROMPT: 'Custom Prompt',
+  VOICE_COMMAND: 'Voice AI',
 };

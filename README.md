@@ -56,7 +56,7 @@ See [`docs/project-structure.md`](docs/project-structure.md) for the full packag
 |---|---|
 | [`docs/architecture.md`](docs/architecture.md) | System architecture diagram and layer-by-layer explanation |
 | [`docs/sequence-diagram.md`](docs/sequence-diagram.md) | End-to-end request flow: Gmail click → AI reply inserted |
-| [`docs/er-diagram.md`](docs/er-diagram.md) | Entity-relationship diagram for all 8 database tables |
+| [`docs/er-diagram.md`](docs/er-diagram.md) | Entity-relationship diagram for all 9 database tables |
 | [`docs/api-documentation.md`](docs/api-documentation.md) | Full REST API reference (all 20 endpoints) |
 | [`docs/installation-guide.md`](docs/installation-guide.md) | Step-by-step setup for backend, frontend, and extension |
 | [`docs/environment-variables.md`](docs/environment-variables.md) | Every configurable environment variable, with defaults |
@@ -67,12 +67,24 @@ See [`docs/project-structure.md`](docs/project-structure.md) for the full packag
 
 ## Core Features
 
-AI email reply generation, professional/friendly/formal/casual rewriting, grammar correction, summarization, translation, subject line generation, expand/shorten, follow-up emails, meeting requests, thank-you/apology/sales/HR/marketing/cold-outreach generators, custom AI prompts, reply regeneration, response history, favorite replies, reusable prompt templates, usage analytics, and file upload (PDF/Word/plain text) text extraction to seed any AI action.
+AI email reply generation, professional/friendly/formal/casual rewriting, grammar correction, summarization, translation, subject line generation, expand/shorten, follow-up emails, meeting requests, thank-you/apology/sales/HR/marketing/cold-outreach generators, custom AI prompts, reply regeneration, response history, favorite replies, reusable prompt templates, usage analytics, file upload (PDF/Word/plain text) text extraction to seed any AI action, and Voice AI (speak a prompt via the Web Speech API and get an AI response, in multiple languages).
 
 ## Testing
 
 - Backend: JUnit 5 + Mockito unit tests, Spring Boot integration tests (`mvn test` from `backend/`).
 - API: Postman collection at [`postman/IntelliMail.postman_collection.json`](postman/IntelliMail.postman_collection.json) — import into Postman and run Register/Login first to populate the collection's auth token.
+
+## Deployment
+
+Production-ready Docker + CI/CD setup: multi-stage Dockerfiles for both services, Docker Compose orchestration (Postgres with a persistent volume, an Nginx reverse proxy, optional Prometheus/Grafana monitoring), GitHub Actions CI/CD to GHCR, and a full runbook for a self-managed VM (DigitalOcean/AWS/Azure). Quick start:
+
+```bash
+cp .env.example .env   # fill in real values
+docker compose build
+docker compose up -d
+```
+
+See [`DEPLOYMENT.md`](DEPLOYMENT.md) for the complete guide: architecture, cloud provisioning, HTTPS activation, monitoring, backups, rollback, and troubleshooting.
 
 ## License
 

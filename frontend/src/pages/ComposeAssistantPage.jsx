@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { Box, Paper, Tabs, Tab, Button, Chip, MenuItem, TextField, Typography, Stack } from '@mui/material';
+import { AnimatePresence, motion } from 'framer-motion';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import EmailEditor from '../components/EmailEditor';
 import ReplyCard from '../components/ReplyCard';
 import Loader from '../components/Loader';
+import PageHeader from '../components/common/PageHeader';
 import * as emailApi from '../api/emailApi';
 import * as historyApi from '../api/historyApi';
 import * as templateApi from '../api/templateApi';
 import { useSnackbar } from '../context/SnackbarContext';
 import { REWRITE_STYLES, CUSTOM_GENERATOR_TYPES } from '../utils/requestTypes';
+import { useReducedMotionSafe } from '../theme/motion';
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // must match backend's UPLOAD_MAX_FILE_SIZE (application.yml)
 
@@ -32,6 +36,7 @@ export default function ComposeAssistantPage() {
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
+  const { fadeInUp } = useReducedMotionSafe();
 
   useEffect(() => {
     templateApi
@@ -170,11 +175,18 @@ export default function ComposeAssistantPage() {
 
   return (
     <Box>
-      <Typography variant="h4" fontWeight={700} gutterBottom>
-        Compose Assistant
-      </Typography>
+      <PageHeader title="Compose Assistant" subtitle="Draft, rewrite, translate, and summarize emails with AI." />
       <Paper variant="outlined" sx={{ mb: 3 }}>
-        <Tabs value={tab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
+        <Tabs
+          value={tab}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            '& .MuiTab-root': { transition: 'color 0.15s ease' },
+            '& .MuiTabs-indicator': { height: 3, borderRadius: '3px 3px 0 0' },
+          }}
+        >
           <Tab label="Generate Reply" value="generate" />
           <Tab label="Improve / Rewrite" value="improve" />
           <Tab label="Translate" value="translate" />
@@ -248,7 +260,15 @@ export default function ComposeAssistantPage() {
               </TextField>
             )}
 
-            <Paper variant="outlined" sx={{ p: 2, bgcolor: 'action.hover' }}>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2,
+                bgcolor: 'action.hover',
+                transition: 'border-color 0.2s ease',
+                borderColor: uploadedFileName ? 'primary.main' : undefined,
+              }}
+            >
               <input
                 type="file"
                 ref={fileInputRef}
@@ -267,7 +287,7 @@ export default function ComposeAssistantPage() {
                   {uploading ? 'Extracting…' : 'Upload Reference File'}
                 </Button>
                 {uploadedFileName && (
-                  <Chip size="small" label={uploadedFileName} onDelete={clearReferenceContext} />
+                  <Chip size="small" color="primary" label={uploadedFileName} onDelete={clearReferenceContext} />
                 )}
               </Stack>
               {uploadedFileName ? (
@@ -283,7 +303,13 @@ export default function ComposeAssistantPage() {
               )}
             </Paper>
 
-            <Button variant="contained" size="large" onClick={handleSubmit} disabled={loading || !content}>
+            <Button
+              variant="contained"
+              size="large"
+              endIcon={<AutoAwesomeIcon />}
+              onClick={handleSubmit}
+              disabled={loading || !content}
+            >
               {loading ? 'Generating…' : 'Generate with AI'}
             </Button>
           </Stack>
@@ -299,14 +325,18 @@ export default function ComposeAssistantPage() {
               <Typography color="text.secondary">Your AI-generated email will appear here.</Typography>
             </Paper>
           )}
-          {!loading && reply && (
-            <ReplyCard
-              reply={reply}
-              onToggleFavorite={handleToggleFavorite}
-              onRegenerate={handleRegenerate}
-              regenerating={regenerating}
-            />
-          )}
+          <AnimatePresence>
+            {!loading && reply && (
+              <motion.div key={`${reply.id}-${reply.attemptNumber}`} initial="initial" animate="animate" exit="exit" variants={fadeInUp}>
+                <ReplyCard
+                  reply={reply}
+                  onToggleFavorite={handleToggleFavorite}
+                  onRegenerate={handleRegenerate}
+                  regenerating={regenerating}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Box>
       </Box>
     </Box>

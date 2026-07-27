@@ -1,0 +1,70 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: amarkr1998
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/intellimail-backend:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/intellimail-backend:${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: true
+          build-args: |
+            VITE_API_BASE_URL=
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/intellimail-frontend:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/intellimail-frontend:${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    # This job needs three repo secrets configured before it can succeed:
+    # DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY (a private key whose public
+    # half is authorized on the target server). Until you've provisioned a
+    # server and added them (see DEPLOYMENT.md), this job will fail here -
+    # that's expected, not a bug. build-and-push above still runs and
+    # publishes images regardless.
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd ~/IntelliMail
+            git pull origin main
+            ./deploy/scripts/deploy.sh

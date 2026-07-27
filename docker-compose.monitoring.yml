@@ -1,0 +1,68 @@
+# Optional observability stack. Bring up alongside the base stack with:
+#   docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d
+#
+# Not started by `docker compose up` alone - nothing here is required for the
+# app itself to run.
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - intellimail-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      # Grafana's UI is deliberately published directly (not proxied by nginx)
+      # since it's an internal ops tool, not part of the public app - access it
+      # via an SSH tunnel (`ssh -L 3000:localhost:3000 user@host`) rather than
+      # opening this port to the internet in your droplet's firewall.
+      - "3000:3000"
+    networks:
+      - intellimail-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - intellimail-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+# No top-level `networks:` block needed here - when this file is combined with
+# docker-compose.yml via `-f docker-compose.yml -f docker-compose.monitoring.yml`,
+# the `intellimail-net` network defined there is already part of the merged
+# config these services attach to.

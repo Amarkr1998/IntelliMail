@@ -25,5 +25,6 @@ public enum RequestType {
     HR,
     MARKETING,
     COLD_OUTREACH,
-    CUSTOM_PROMPT
+    CUSTOM_PROMPT,
+    VOICE_COMMAND
 }

@@ -32,7 +32,17 @@ public class SecurityConfig {
             "/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
-            "/actuator/health"
+            "/actuator/health",
+            // Verified against a real run: moving actuator to a separate
+            // management.server.port does NOT bypass this filter chain -
+            // Spring Boot reuses the same ApplicationContext/security beans
+            // regardless of which port served the request, it's just a
+            // second embedded connector. Prometheus can't present a JWT, so
+            // this has to be explicitly public; safety instead comes from
+            // network isolation - the management port is never published to
+            // the host or proxied by nginx (see docker-compose.yml), only
+            // reachable by other containers on the internal Docker network.
+            "/actuator/prometheus"
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;

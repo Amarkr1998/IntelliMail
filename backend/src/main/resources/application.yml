@@ -71,11 +71,23 @@ springdoc:
     path: /swagger-ui.html
     operationsSorter: method
 
+# management.server.port defaults to the same port as the app when
+# MANAGEMENT_SERVER_PORT is unset, so native/dev usage is unchanged. When set to a
+# different port (only done in the Docker monitoring overlay), actuator moves to
+# its own embedded connector - but (verified against a real run) Spring Boot
+# still reuses the same ApplicationContext/security beans there, so our custom
+# SecurityFilterChain still applies. /actuator/prometheus is explicitly
+# permitted in SecurityConfig's PUBLIC_ENDPOINTS for this reason (Prometheus
+# can't present a JWT); safety instead comes from network isolation - this port
+# is never published to the host or proxied by nginx, only reachable by other
+# containers on the internal Docker network.
 management:
+  server:
+    port: ${MANAGEMENT_SERVER_PORT:${server.port}}
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
 
 intellimail:
   jwt:

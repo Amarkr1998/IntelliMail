@@ -14,7 +14,8 @@
     { "key": "refreshToken", "value": "", "type": "string" },
     { "key": "templateId", "value": "", "type": "string" },
     { "key": "emailRequestId", "value": "", "type": "string" },
-    { "key": "replyId", "value": "", "type": "string" }
+    { "key": "replyId", "value": "", "type": "string" },
+    { "key": "voiceInteractionId", "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -242,6 +243,44 @@
               ]
             },
             "description": "Select a PDF, Word, or plain-text file for the 'file' field. Returns extracted text you can paste into any other /api/email/* request."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Voice AI",
+      "item": [
+        {
+          "name": "Submit Voice Prompt",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/voice/prompt", "host": ["{{baseUrl}}"], "path": ["api", "voice", "prompt"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transcript\": \"Reply saying Tuesday at 3pm works for me\",\n  \"language\": \"English (US)\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('voiceInteractionId', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Voice History",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/voice/history?page=0&size=20", "host": ["{{baseUrl}}"], "path": ["api", "voice", "history"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }] }
           }
         }
       ]

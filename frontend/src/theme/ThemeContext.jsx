@@ -1,6 +1,13 @@
 import { createContext, useContext, useMemo, useState, useEffect } from 'react';
 import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
+import { getPalette } from './palette';
+import typography from './typography';
+import { getComponentOverrides } from './components';
 
 const ColorModeContext = createContext(null);
 
@@ -18,16 +25,10 @@ export function ColorModeProvider({ children }) {
   const theme = useMemo(
     () =>
       createTheme({
-        palette: {
-          mode,
-          primary: { main: '#4F46E5' },
-          secondary: { main: '#14B8A6' },
-          background:
-            mode === 'dark'
-              ? { default: '#0f1115', paper: '#161a20' }
-              : { default: '#f5f6fa', paper: '#ffffff' },
-        },
-        shape: { borderRadius: 10 },
+        palette: getPalette(mode),
+        typography,
+        shape: { borderRadius: 14 },
+        components: getComponentOverrides(mode),
       }),
     [mode],
   );

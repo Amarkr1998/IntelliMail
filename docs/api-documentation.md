@@ -95,6 +95,33 @@ Accepts PDF, Word (`.doc`/`.docx`), plain text, RTF, HTML, and most other common
 
 If the extracted text exceeds 20,000 characters (the same cap as `originalContent`/`content` on every other `/api/email/*` request), it's truncated and `truncated` is `true` rather than the request failing.
 
+## Voice AI
+
+Speak a prompt instead of typing it: the browser transcribes speech to text client-side (via the Web Speech API), the transcript is sent here, and the AI's response is generated and persisted alongside it.
+
+| Method | Path | Request Body | Description |
+|---|---|---|---|
+| POST | `/api/voice/prompt` | `{ transcript, language? }` | Submits a transcribed voice prompt and returns/persists the AI's response |
+| GET | `/api/voice/history?page=&size=` | — | Paged list of past voice prompts and responses, newest first |
+
+`transcript` (required, max 5,000 characters) is the speech-to-text result captured client-side. `language` (optional, max 40 characters) is a human-readable label (e.g. `"English (US)"`, `"Spanish"`) matching whatever language the browser was recognizing speech in — it steers the AI's reply into that language but plays no role in transcription itself, which already happened in the browser before this endpoint is called.
+
+**Response (`VoiceResponse`):**
+```json
+{
+  "id": "...",
+  "transcript": "Reply saying Tuesday at 3pm works for me",
+  "aiResponse": "Sure, Tuesday at 3pm works for me. Looking forward to it!",
+  "language": "English (US)",
+  "aiModel": "gpt-4o",
+  "totalTokens": 58,
+  "latencyMs": 640,
+  "createdAt": "..."
+}
+```
+
+Unlike the `/api/email/*` endpoints, a voice prompt is a single self-contained turn — there's no reply-attempt history or regeneration; each submission creates exactly one new row.
+
 ## History (includes Reply Regeneration & Favorite Replies)
 
 | Method | Path | Description |

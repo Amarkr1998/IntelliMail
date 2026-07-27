@@ -70,6 +70,22 @@ class PromptFactoryTest {
     }
 
     @Test
+    void forVoiceCommand_withoutLanguage_omitsLanguageInstruction() {
+        PreparedPrompt prompt = promptFactory.forVoiceCommand("Draft a reply saying I'll be there", null);
+
+        assertThat(prompt.userPrompt()).contains("Draft a reply saying I'll be there");
+        assertThat(prompt.userPrompt()).doesNotContain("Respond in");
+        assertThat(prompt.systemPrompt()).containsIgnoringCase("voice");
+    }
+
+    @Test
+    void forVoiceCommand_withLanguage_includesRespondInInstruction() {
+        PreparedPrompt prompt = promptFactory.forVoiceCommand("What's a polite way to decline?", "Spanish");
+
+        assertThat(prompt.userPrompt()).contains("Respond in Spanish.");
+    }
+
+    @Test
     void withReferenceContext_appendsItAsALabeledBlock_withoutTouchingTheSystemPrompt() {
         PreparedPrompt base = promptFactory.forGenerateReply("Can we confirm the meeting?", null, null);
 
