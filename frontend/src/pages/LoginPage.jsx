@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Box, TextField, Button, Link, Alert, Collapse } from '@mui/material';
+import { Box, TextField, Button, Link, Alert, Collapse, Divider, Typography } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthLayout from '../components/common/AuthLayout';
 import LoginIllustration from '../components/illustrations/LoginIllustration';
+import GoogleLoginButton from '../components/GoogleLoginButton';
 
 export default function LoginPage() {
   const {
@@ -46,6 +47,14 @@ export default function LoginPage() {
           {serverError}
         </Alert>
       </Collapse>
+      <Box sx={{ mb: 2 }}>
+        <GoogleLoginButton />
+      </Box>
+      <Divider sx={{ mb: 2 }}>
+        <Typography variant="caption" color="text.secondary">
+          or continue with email
+        </Typography>
+      </Divider>
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <TextField
           label="Email"

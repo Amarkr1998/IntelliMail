@@ -47,6 +47,13 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
+  const loginWithGoogle = async (idToken) => {
+    const data = await authApi.loginWithGoogle(idToken);
+    persistTokens(data.accessToken, data.refreshToken);
+    setUser(data.user);
+    return data.user;
+  };
+
   const logout = () => {
     clearSession();
   };
@@ -58,7 +65,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

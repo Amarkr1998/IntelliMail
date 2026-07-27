@@ -10,12 +10,16 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import AcceptInvitationPage from './pages/AcceptInvitationPage';
 import ComposeAssistantPage from './pages/ComposeAssistantPage';
 import VoiceAssistantPage from './pages/VoiceAssistantPage';
 import HistoryPage from './pages/HistoryPage';
 import TemplatesPage from './pages/TemplatesPage';
 import SettingsPage from './pages/SettingsPage';
 import ProfilePage from './pages/ProfilePage';
+import CreateOrganizationPage from './pages/CreateOrganizationPage';
+import OrganizationPage from './pages/OrganizationPage';
+import BillingPage from './pages/BillingPage';
 
 // Code-split the two pages that pull in @mui/x-charts, so the chart library
 // isn't part of the initial app-shell bundle every route pays for.
@@ -37,6 +41,7 @@ export default function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/accept-invitation" element={<AcceptInvitationPage />} />
 
               <Route element={<ProtectedRoute />}>
                 <Route element={<Layout />}>
@@ -62,6 +67,9 @@ export default function App() {
                   />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/create-organization" element={<CreateOrganizationPage />} />
+                  <Route path="/organization" element={<OrganizationPage />} />
+                  <Route path="/billing" element={<BillingPage />} />
                 </Route>
               </Route>
 

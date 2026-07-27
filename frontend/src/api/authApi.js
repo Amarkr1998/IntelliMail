@@ -14,3 +14,6 @@ export const forgotPassword = (email) =>
 
 export const resetPassword = (token, newPassword) =>
   axiosClient.post('/api/auth/reset-password', { token, newPassword }).then((res) => res.data.data);
+
+export const loginWithGoogle = (idToken) =>
+  axiosClient.post('/api/auth/google', { idToken }).then((res) => res.data.data);

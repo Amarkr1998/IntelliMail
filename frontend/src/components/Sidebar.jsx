@@ -1,4 +1,4 @@
-import { Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, useMediaQuery } from '@mui/material';
+import { Drawer, List, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Toolbar, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import EditNoteIcon from '@mui/icons-material/EditNote';
@@ -7,11 +7,14 @@ import HistoryIcon from '@mui/icons-material/History';
 import ArticleIcon from '@mui/icons-material/Article';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import SettingsIcon from '@mui/icons-material/Settings';
+import GroupIcon from '@mui/icons-material/Group';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export const drawerWidth = 220;
 
-const navItems = [
+const mainNavItems = [
   { label: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
   { label: 'Compose Assistant', path: '/compose', icon: <EditNoteIcon /> },
   { label: 'Voice AI', path: '/voice-ai', icon: <MicIcon /> },
@@ -21,12 +24,17 @@ const navItems = [
   { label: 'Settings', path: '/settings', icon: <SettingsIcon /> },
 ];
 
-function NavList({ onNavigate }) {
+const organizationNavItems = [
+  { label: 'Team', path: '/organization', icon: <GroupIcon /> },
+  { label: 'Billing', path: '/billing', icon: <CreditCardIcon /> },
+];
+
+function NavItems({ items, onNavigate }) {
   const location = useLocation();
 
   return (
-    <List sx={{ px: 1.25 }}>
-      {navItems.map((item) => {
+    <>
+      {items.map((item) => {
         const selected = location.pathname === item.path;
         return (
           <ListItemButton
@@ -57,6 +65,22 @@ function NavList({ onNavigate }) {
           </ListItemButton>
         );
       })}
+    </>
+  );
+}
+
+function NavList({ onNavigate }) {
+  const { user } = useAuth();
+
+  return (
+    <List sx={{ px: 1.25 }}>
+      <NavItems items={mainNavItems} onNavigate={onNavigate} />
+      {user?.organizationId && (
+        <>
+          <ListSubheader sx={{ bgcolor: 'transparent', lineHeight: '32px' }}>Organization</ListSubheader>
+          <NavItems items={organizationNavItems} onNavigate={onNavigate} />
+        </>
+      )}
     </List>
   );
 }
