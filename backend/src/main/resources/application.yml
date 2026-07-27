@@ -42,6 +42,24 @@ spring:
     serialization:
       write-dates-as-timestamps: false
 
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          # Explicit timeouts so a bad send (wrong credentials, network issue)
+          # fails fast instead of hanging the request thread on the OS default
+          # socket timeout, which can be minutes.
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
   ai:
     azure:
       openai:
@@ -88,6 +106,13 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
+  health:
+    # Mail delivery is best-effort (forgot-password emails) and never
+    # required for the app to serve traffic - the Docker healthcheck and
+    # restart policy key off /actuator/health, so a transient SMTP outage
+    # must not flip the whole container to unhealthy and get it restarted.
+    mail:
+      enabled: false
 
 intellimail:
   jwt:
@@ -97,6 +122,13 @@ intellimail:
     issuer: intellimail
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,chrome-extension://*}
+  mail:
+    # Gmail validates/rewrites the From header against the authenticated
+    # account, so this should normally just match MAIL_USERNAME.
+    from-address: ${MAIL_FROM:${MAIL_USERNAME:}}
+  app:
+    # Used to build the password-reset link emailed to users.
+    frontend-url: ${FRONTEND_URL:http://localhost:5173}
   ai:
     default-temperature: ${AZURE_OPENAI_TEMPERATURE:0.7}
     default-max-tokens: ${AZURE_OPENAI_MAX_TOKENS:1024}

@@ -1,10 +1,13 @@
 package com.intellimail.mail.controller;
 
 import com.intellimail.mail.dto.auth.AuthResponse;
+import com.intellimail.mail.dto.auth.ForgotPasswordRequest;
 import com.intellimail.mail.dto.auth.LoginRequest;
 import com.intellimail.mail.dto.auth.RefreshTokenRequest;
 import com.intellimail.mail.dto.auth.RegisterRequest;
+import com.intellimail.mail.dto.auth.ResetPasswordRequest;
 import com.intellimail.mail.service.AuthService;
+import com.intellimail.mail.service.PasswordResetService;
 import com.intellimail.mail.util.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/register")
     @Operation(summary = "Register a new account",
@@ -63,5 +67,30 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         AuthResponse response = authService.refresh(request);
         return ResponseEntity.ok(ApiResponse.success("Token refreshed", response));
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Request a password reset",
+            description = "If the email is registered, sends a reset link. Always responds the same way regardless of whether the email exists, to avoid revealing which accounts are registered.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Request accepted")
+    })
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request,
+                                                              HttpServletRequest httpRequest) {
+        passwordResetService.forgotPassword(request, httpRequest);
+        return ResponseEntity.ok(ApiResponse.success("If that email exists, a reset link has been sent", null));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Complete a password reset",
+            description = "Consumes a reset token (from the emailed link) and sets a new password.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Password reset"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid, expired, or already-used token")
+    })
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request,
+                                                             HttpServletRequest httpRequest) {
+        passwordResetService.resetPassword(request, httpRequest);
+        return ResponseEntity.ok(ApiResponse.success("Password reset successfully", null));
     }
 }

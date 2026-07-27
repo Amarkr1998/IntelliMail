@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { TextField, Button, Link, Alert, Collapse } from '@mui/material';
+import { Box, TextField, Button, Link, Alert, Collapse } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthLayout from '../components/common/AuthLayout';
@@ -65,6 +65,11 @@ export default function LoginPage() {
           error={Boolean(errors.password)}
           helperText={errors.password?.message}
         />
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
+          <Link component={RouterLink} to="/forgot-password" variant="body2">
+            Forgot password?
+          </Link>
+        </Box>
         <Button type="submit" variant="contained" fullWidth size="large" sx={{ mt: 2 }} disabled={submitting}>
           {submitting ? 'Logging in…' : 'Log In'}
         </Button>

@@ -22,3 +22,7 @@ intellimail:
     access-token-expiration-ms: 900000
     refresh-token-expiration-ms: 604800000
     issuer: intellimail-test
+  mail:
+    from-address: test-sender@intellimail-test.local
+  app:
+    frontend-url: http://localhost:5173
