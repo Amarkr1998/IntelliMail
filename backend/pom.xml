@@ -30,6 +30,7 @@
         <argLine>-XX:+EnableDynamicAgentLoading -Djdk.attach.allowAttachSelf=true</argLine>
         <springdoc.version>2.8.5</springdoc.version>
         <tika.version>2.9.2</tika.version>
+        <stripe.version>33.1.1</stripe.version>
     </properties>
 
     <dependencyManagement>
@@ -62,6 +63,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
+        <!-- NimbusJwtDecoder only, for verifying Google Sign-In ID tokens against
+             Google's JWKS. Deliberately not -oauth2-client or -resource-server:
+             this app never does an authorization-code redirect flow or acts as a
+             resource server, it just verifies a token the frontend already
+             obtained - pulling in either of those would auto-configure filter
+             chains that fight with the existing custom JwtAuthenticationFilter. -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-jose</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
@@ -79,6 +90,13 @@
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-azure-openai</artifactId>
+        </dependency>
+
+        <!-- Billing -->
+        <dependency>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>${stripe.version}</version>
         </dependency>
 
         <!-- File upload text extraction (PDF, Word, plain text, and more via AutoDetectParser) -->

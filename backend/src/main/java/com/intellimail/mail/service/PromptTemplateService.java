@@ -37,16 +37,17 @@ public class PromptTemplateService {
     private final PromptTemplateMapper promptTemplateMapper;
 
     @Transactional(readOnly = true)
-    public PageResponse<PromptTemplateResponse> getTemplates(UUID userId, Pageable pageable) {
-        Page<PromptTemplate> page = promptTemplateRepository.findVisibleToUser(userId, pageable);
+    public PageResponse<PromptTemplateResponse> getTemplates(UUID userId, UUID organizationId, Pageable pageable) {
+        Page<PromptTemplate> page = promptTemplateRepository.findVisibleToUser(userId, organizationId, pageable);
         return PageResponse.from(page, promptTemplateMapper::toResponse);
     }
 
     @Transactional
-    public PromptTemplateResponse createTemplate(UUID userId, PromptTemplateRequest request) {
+    public PromptTemplateResponse createTemplate(UUID userId, UUID organizationId, PromptTemplateRequest request) {
         User owner = userRepository.getReferenceById(userId);
         PromptTemplate template = promptTemplateMapper.toEntity(request);
         template.setOwner(owner);
+        template.setOrganizationId(organizationId);
         return promptTemplateMapper.toResponse(promptTemplateRepository.save(template));
     }
 

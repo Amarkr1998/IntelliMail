@@ -2,11 +2,13 @@ package com.intellimail.mail.controller;
 
 import com.intellimail.mail.dto.auth.AuthResponse;
 import com.intellimail.mail.dto.auth.ForgotPasswordRequest;
+import com.intellimail.mail.dto.auth.GoogleLoginRequest;
 import com.intellimail.mail.dto.auth.LoginRequest;
 import com.intellimail.mail.dto.auth.RefreshTokenRequest;
 import com.intellimail.mail.dto.auth.RegisterRequest;
 import com.intellimail.mail.dto.auth.ResetPasswordRequest;
 import com.intellimail.mail.service.AuthService;
+import com.intellimail.mail.service.GoogleAuthService;
 import com.intellimail.mail.service.PasswordResetService;
 import com.intellimail.mail.util.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +32,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
+    private final GoogleAuthService googleAuthService;
 
     @PostMapping("/register")
     @Operation(summary = "Register a new account",
@@ -67,6 +70,18 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         AuthResponse response = authService.refresh(request);
         return ResponseEntity.ok(ApiResponse.success("Token refreshed", response));
+    }
+
+    @PostMapping("/google")
+    @Operation(summary = "Sign in with Google", description = "Verifies a Google Sign-In ID token and logs in, linking to or auto-registering an account by email.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Signed in"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid Google ID token")
+    })
+    public ResponseEntity<ApiResponse<AuthResponse>> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request,
+                                                                       HttpServletRequest httpRequest) {
+        AuthResponse response = googleAuthService.loginOrRegister(request, httpRequest);
+        return ResponseEntity.ok(ApiResponse.success("Signed in with Google", response));
     }
 
     @PostMapping("/forgot-password")

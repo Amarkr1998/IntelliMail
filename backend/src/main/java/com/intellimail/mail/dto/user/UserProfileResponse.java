@@ -9,6 +9,9 @@ public record UserProfileResponse(
         String fullName,
         String email,
         Set<String> roles,
-        Instant createdAt
+        Instant createdAt,
+        UUID organizationId,
+        String organizationName,
+        String orgRole
 ) {
 }

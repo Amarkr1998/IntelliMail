@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,6 +44,7 @@ public class EmailController {
     private final FileExtractionService fileExtractionService;
 
     @PostMapping("/generate")
+    @PreAuthorize("@subscriptionGuard.hasActiveAccess(authentication)")
     @Operation(summary = "Generate an AI reply", description = "Drafts a reply to an existing email thread.")
     public ApiResponse<EmailReplyResponse> generate(@AuthenticationPrincipal UserPrincipal principal,
                                                       @Valid @RequestBody EmailGenerateRequest request) {
@@ -50,6 +52,7 @@ public class EmailController {
     }
 
     @PostMapping("/improve")
+    @PreAuthorize("@subscriptionGuard.hasActiveAccess(authentication)")
     @Operation(summary = "Rewrite or correct an email",
             description = "Professional/friendly/formal/casual rewrite, grammar correction, expand, or shorten — selected via the style field.")
     public ApiResponse<EmailReplyResponse> improve(@AuthenticationPrincipal UserPrincipal principal,
@@ -58,6 +61,7 @@ public class EmailController {
     }
 
     @PostMapping("/translate")
+    @PreAuthorize("@subscriptionGuard.hasActiveAccess(authentication)")
     @Operation(summary = "Translate an email", description = "Translates the given content into the requested target language.")
     public ApiResponse<EmailReplyResponse> translate(@AuthenticationPrincipal UserPrincipal principal,
                                                        @Valid @RequestBody EmailTranslateRequest request) {
@@ -65,6 +69,7 @@ public class EmailController {
     }
 
     @PostMapping("/summarize")
+    @PreAuthorize("@subscriptionGuard.hasActiveAccess(authentication)")
     @Operation(summary = "Summarize an email", description = "Produces a concise summary of the given email content.")
     public ApiResponse<EmailReplyResponse> summarize(@AuthenticationPrincipal UserPrincipal principal,
                                                        @Valid @RequestBody EmailSummarizeRequest request) {
@@ -72,6 +77,7 @@ public class EmailController {
     }
 
     @PostMapping("/subject")
+    @PreAuthorize("@subscriptionGuard.hasActiveAccess(authentication)")
     @Operation(summary = "Generate a subject line", description = "Proposes a concise subject line for the given email body.")
     public ApiResponse<EmailReplyResponse> subject(@AuthenticationPrincipal UserPrincipal principal,
                                                      @Valid @RequestBody EmailSubjectRequest request) {
@@ -79,6 +85,7 @@ public class EmailController {
     }
 
     @PostMapping("/followup")
+    @PreAuthorize("@subscriptionGuard.hasActiveAccess(authentication)")
     @Operation(summary = "Generate a follow-up email", description = "Drafts a polite follow-up for a thread that hasn't received a response.")
     public ApiResponse<EmailReplyResponse> followup(@AuthenticationPrincipal UserPrincipal principal,
                                                       @Valid @RequestBody EmailFollowupRequest request) {
@@ -86,6 +93,7 @@ public class EmailController {
     }
 
     @PostMapping("/custom")
+    @PreAuthorize("@subscriptionGuard.hasActiveAccess(authentication)")
     @Operation(summary = "Compose an email from scratch",
             description = "Backs the Meeting Request, Thank You, Apology, Sales, HR, Marketing, Cold Outreach and fully-Custom-Prompt generators, selected via requestType.")
     public ApiResponse<EmailReplyResponse> custom(@AuthenticationPrincipal UserPrincipal principal,

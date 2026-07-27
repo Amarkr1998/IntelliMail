@@ -60,7 +60,7 @@ class PromptTemplateServiceTest {
         PromptTemplateRequest request = new PromptTemplateRequest(
                 "Cold Outreach v1", "desc", RequestType.COLD_OUTREACH, "Write about {{topic}}", null, false);
 
-        PromptTemplateResponse response = promptTemplateService.createTemplate(owner.getId(), request);
+        PromptTemplateResponse response = promptTemplateService.createTemplate(owner.getId(), null, request);
 
         assertThat(response.ownerId()).isEqualTo(owner.getId());
         assertThat(response.name()).isEqualTo("Cold Outreach v1");
@@ -68,6 +68,26 @@ class PromptTemplateServiceTest {
         ArgumentCaptor<PromptTemplate> captor = ArgumentCaptor.forClass(PromptTemplate.class);
         verify(promptTemplateRepository).save(captor.capture());
         assertThat(captor.getValue().getOwner()).isEqualTo(owner);
+    }
+
+    @Test
+    void createTemplate_withOrganization_setsOrganizationIdOnTemplate() {
+        UUID organizationId = UUID.randomUUID();
+        when(userRepository.getReferenceById(owner.getId())).thenReturn(owner);
+        when(promptTemplateRepository.save(any(PromptTemplate.class))).thenAnswer(invocation -> {
+            PromptTemplate template = invocation.getArgument(0);
+            template.setId(UUID.randomUUID());
+            return template;
+        });
+
+        PromptTemplateRequest request = new PromptTemplateRequest(
+                "Team template", "desc", RequestType.COLD_OUTREACH, "Write about {{topic}}", null, true);
+
+        promptTemplateService.createTemplate(owner.getId(), organizationId, request);
+
+        ArgumentCaptor<PromptTemplate> captor = ArgumentCaptor.forClass(PromptTemplate.class);
+        verify(promptTemplateRepository).save(captor.capture());
+        assertThat(captor.getValue().getOrganizationId()).isEqualTo(organizationId);
     }
 
     @Test

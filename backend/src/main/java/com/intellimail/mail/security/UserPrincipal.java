@@ -1,6 +1,7 @@
 package com.intellimail.mail.security;
 
 import com.intellimail.mail.entity.User;
+import com.intellimail.mail.enums.OrgRole;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,20 +21,34 @@ public class UserPrincipal implements UserDetails {
     private final boolean enabled;
     private final Collection<? extends GrantedAuthority> authorities;
 
+    /**
+     * Read fresh from the {@link User} on every request (this class is
+     * rebuilt per-request by {@code CustomUserDetailsService}, never cached
+     * or sourced from JWT claims) - so these are never stale, unlike a claim
+     * embedded in a 15-minute-lived access token would be.
+     */
+    private final UUID organizationId;
+    private final OrgRole orgRole;
+
     private UserPrincipal(UUID id, String email, String password, boolean enabled,
-                           Collection<? extends GrantedAuthority> authorities) {
+                           Collection<? extends GrantedAuthority> authorities,
+                           UUID organizationId, OrgRole orgRole) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.enabled = enabled;
         this.authorities = authorities;
+        this.organizationId = organizationId;
+        this.orgRole = orgRole;
     }
 
     public static UserPrincipal of(User user) {
         Collection<GrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> (GrantedAuthority) new SimpleGrantedAuthority(role.getName().name()))
                 .collect(Collectors.toSet());
-        return new UserPrincipal(user.getId(), user.getEmail(), user.getPassword(), user.isEnabled(), authorities);
+        UUID organizationId = user.getOrganization() != null ? user.getOrganization().getId() : null;
+        return new UserPrincipal(user.getId(), user.getEmail(), user.getPassword(), user.isEnabled(), authorities,
+                organizationId, user.getOrgRole());
     }
 
     @Override

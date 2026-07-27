@@ -26,3 +26,10 @@ intellimail:
     from-address: test-sender@intellimail-test.local
   app:
     frontend-url: http://localhost:5173
+  google-oauth:
+    client-id: test-google-client-id.apps.googleusercontent.com
+  stripe:
+    secret-key: sk_test_dummy
+    webhook-secret: whsec_test_dummy
+    price-id-starter: price_test_starter
+    price-id-pro: price_test_pro

@@ -129,6 +129,16 @@ intellimail:
   app:
     # Used to build the password-reset link emailed to users.
     frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  google-oauth:
+    # Also used client-side by the frontend's GoogleLogin button - not a secret,
+    # just an identifier, safe to be public. No client secret exists in this
+    # app at all: ID-token verification never talks to Google server-to-server.
+    client-id: ${GOOGLE_OAUTH_CLIENT_ID:}
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+    price-id-starter: ${STRIPE_PRICE_ID_STARTER:}
+    price-id-pro: ${STRIPE_PRICE_ID_PRO:}
   ai:
     default-temperature: ${AZURE_OPENAI_TEMPERATURE:0.7}
     default-max-tokens: ${AZURE_OPENAI_MAX_TOKENS:1024}

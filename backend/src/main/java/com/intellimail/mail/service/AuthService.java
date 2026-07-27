@@ -89,6 +89,11 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    /** Issues a fresh access/refresh token pair for an already-resolved user (e.g. after Google Sign-In). */
+    public AuthResponse issueTokensFor(User user) {
+        return buildAuthResponse(user);
+    }
+
     private AuthResponse buildAuthResponse(User user) {
         UserPrincipal principal = UserPrincipal.of(user);
         String accessToken = jwtService.generateAccessToken(principal);

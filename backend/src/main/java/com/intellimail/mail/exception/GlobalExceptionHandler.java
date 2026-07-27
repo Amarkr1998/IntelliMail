@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -20,12 +21,22 @@ import java.util.Map;
 /**
  * Single translation point from exceptions to the {@link ApiResponse} JSON
  * envelope every client (React app, Chrome extension, Postman) already
- * expects. Authentication/authorization failures raised inside the Spring
- * Security filter chain are handled separately by
+ * expects. URL-pattern-based authorization failures (the {@code .authorizeHttpRequests(...)}
+ * rules in {@code SecurityConfig}) are raised inside the filter chain and
+ * handled separately by
  * {@link com.intellimail.mail.security.JwtAuthenticationEntryPoint} and
  * {@link com.intellimail.mail.security.JwtAccessDeniedHandler} — they never
- * reach this class, since those failures happen before the DispatcherServlet
- * hands control to the controller.
+ * reach this class.
+ *
+ * <p>Method-level {@code @PreAuthorize} denials are a different story
+ * (verified against a real failing test, not assumed): they throw
+ * {@link AuthorizationDeniedException} from inside the AOP proxy wrapping the
+ * controller method invocation, which happens <em>inside</em>
+ * {@code DispatcherServlet.doDispatch()} - resolved by this
+ * {@code @RestControllerAdvice} before it ever gets a chance to escape back
+ * out to the filter chain where {@code JwtAccessDeniedHandler} lives. Without
+ * the handler below, every {@code @PreAuthorize} denial fell through to
+ * {@link #handleUnexpected} and returned a misleading 500.
  */
 @RestControllerAdvice
 @Slf4j
@@ -82,6 +93,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error(ex.getMessage()));
     }
 
+    @ExceptionHandler(GoogleTokenVerificationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleGoogleTokenVerification(GoogleTokenVerificationException ex) {
+        log.warn("Google Sign-In token verification failed: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Google Sign-In failed"));
+    }
+
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleUserNotFound(UserNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
@@ -95,6 +112,31 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnauthorizedActionException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnauthorizedAction(UnauthorizedActionException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied: insufficient permissions"));
+    }
+
+    @ExceptionHandler(UserAlreadyInOrganizationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUserAlreadyInOrganization(UserAlreadyInOrganizationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(CannotRemoveSoleOwnerException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCannotRemoveSoleOwner(CannotRemoveSoleOwnerException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(OrganizationSlugTakenException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOrganizationSlugTaken(OrganizationSlugTakenException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(UserNotInOrganizationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUserNotInOrganization(UserNotInOrganizationException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(FileProcessingException.class)
@@ -114,6 +156,18 @@ public class GlobalExceptionHandler {
         log.error("AI generation failed", ex);
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                 .body(ApiResponse.error("The AI service is temporarily unavailable. Please try again."));
+    }
+
+    @ExceptionHandler(NoBillingAccountException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoBillingAccount(NoBillingAccountException ex) {
+        return ResponseEntity.badRequest().body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(BillingException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBillingFailure(BillingException ex) {
+        log.error("Billing operation failed", ex);
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(ApiResponse.error("The billing service is temporarily unavailable. Please try again."));
     }
 
     @ExceptionHandler(Exception.class)

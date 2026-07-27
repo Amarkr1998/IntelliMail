@@ -62,11 +62,83 @@ class PromptTemplateRepositoryTest {
                 .build());
 
         List<PromptTemplate> visible = promptTemplateRepository
-                .findVisibleToUser(owner.getId(), PageRequest.of(0, 10))
+                .findVisibleToUser(owner.getId(), null, PageRequest.of(0, 10))
                 .getContent();
 
         assertThat(visible).extracting(PromptTemplate::getId)
                 .containsExactlyInAnyOrder(ownPrivate.getId(), someonesPublic.getId());
+    }
+
+    @Test
+    void findVisibleToUser_orgMember_seesOwnOrgsPublicTemplates_butNotOtherOrgsPublicTemplates() {
+        User orgAUser = persistUser("org-a-" + UUID.randomUUID() + "@intellimail.com");
+        User orgBUser = persistUser("org-b-" + UUID.randomUUID() + "@intellimail.com");
+        UUID organizationA = UUID.randomUUID();
+        UUID organizationB = UUID.randomUUID();
+
+        PromptTemplate orgAPublic = promptTemplateRepository.save(PromptTemplate.builder()
+                .name("Org A public template")
+                .category(RequestType.SALES)
+                .promptText("...")
+                .owner(orgAUser)
+                .isPublic(true)
+                .organizationId(organizationA)
+                .build());
+
+        promptTemplateRepository.save(PromptTemplate.builder()
+                .name("Org B public template")
+                .category(RequestType.SALES)
+                .promptText("...")
+                .owner(orgBUser)
+                .isPublic(true)
+                .organizationId(organizationB)
+                .build());
+
+        PromptTemplate genuinelyGlobal = promptTemplateRepository.save(PromptTemplate.builder()
+                .name("Genuinely global template")
+                .category(RequestType.THANK_YOU)
+                .promptText("...")
+                .owner(orgBUser)
+                .isPublic(true)
+                .build());
+
+        List<PromptTemplate> visibleToOrgAUser = promptTemplateRepository
+                .findVisibleToUser(orgAUser.getId(), organizationA, PageRequest.of(0, 10))
+                .getContent();
+
+        assertThat(visibleToOrgAUser).extracting(PromptTemplate::getId)
+                .containsExactlyInAnyOrder(orgAPublic.getId(), genuinelyGlobal.getId());
+    }
+
+    @Test
+    void findVisibleToUser_soloUser_behaviorUnchangedByOrganizationColumn() {
+        User soloUser = persistUser("solo-" + UUID.randomUUID() + "@intellimail.com");
+        User orgUser = persistUser("org-" + UUID.randomUUID() + "@intellimail.com");
+        UUID organization = UUID.randomUUID();
+
+        promptTemplateRepository.save(PromptTemplate.builder()
+                .name("Org-scoped public template")
+                .category(RequestType.SALES)
+                .promptText("...")
+                .owner(orgUser)
+                .isPublic(true)
+                .organizationId(organization)
+                .build());
+
+        PromptTemplate globalTemplate = promptTemplateRepository.save(PromptTemplate.builder()
+                .name("Global template")
+                .category(RequestType.THANK_YOU)
+                .promptText("...")
+                .owner(orgUser)
+                .isPublic(true)
+                .build());
+
+        List<PromptTemplate> visibleToSoloUser = promptTemplateRepository
+                .findVisibleToUser(soloUser.getId(), null, PageRequest.of(0, 10))
+                .getContent();
+
+        assertThat(visibleToSoloUser).extracting(PromptTemplate::getId)
+                .containsExactly(globalTemplate.getId());
     }
 
     @Test

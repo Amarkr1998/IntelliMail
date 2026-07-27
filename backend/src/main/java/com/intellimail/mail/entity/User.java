@@ -1,11 +1,15 @@
 package com.intellimail.mail.entity;
 
+import com.intellimail.mail.enums.OrgRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.Getter;
@@ -48,4 +52,26 @@ public class User extends BaseEntity {
     )
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
+
+    /**
+     * Deliberate v1 scope decision: one organization per user, modeled as a
+     * direct column rather than a membership join table. Multi-org
+     * membership, if ever needed, would migrate this into a proper
+     * {@code organization_memberships} table - not a concern this feature
+     * takes on. Both fields are nullable together (see the DB CHECK
+     * constraint in V14): organization membership is entirely opt-in, and a
+     * user with {@code organization == null} behaves exactly as it did
+     * before this feature existed.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "org_role", length = 20)
+    private OrgRole orgRole;
+
+    /** Set once a user links or auto-registers via Google Sign-In; null otherwise. */
+    @Column(name = "google_subject_id", unique = true, length = 255)
+    private String googleSubjectId;
 }

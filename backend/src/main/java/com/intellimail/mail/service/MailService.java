@@ -44,6 +44,46 @@ public class MailService {
         mailSender.send(message);
     }
 
+    /**
+     * @param brandColor the inviting organization's custom accent color
+     *                   ({@link com.intellimail.mail.entity.Organization#getBrandColor()}),
+     *                   or {@code null} to fall back to the default brand color.
+     */
+    public void sendOrganizationInvitationEmail(String toEmail, String organizationName, String inviteLink, String brandColor) {
+        MimeMessage message = mailSender.createMimeMessage();
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(message, false);
+            helper.setTo(toEmail);
+            helper.setFrom(mailProperties.fromAddress());
+            helper.setSubject("You've been invited to join " + organizationName + " on IntelliMail");
+            helper.setText(buildInvitationHtml(organizationName, inviteLink, brandColor), true);
+        } catch (MessagingException e) {
+            throw new MailPreparationException("Could not prepare organization invitation email", e);
+        }
+        mailSender.send(message);
+    }
+
+    private String buildInvitationHtml(String organizationName, String inviteLink, String brandColor) {
+        String color = brandColor != null ? brandColor : "#4F46E5";
+        return """
+                <!doctype html>
+                <html>
+                <body style="margin:0;padding:32px;background-color:#f5f6fa;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
+                  <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;padding:32px;">
+                    <div style="display:inline-block;width:36px;height:36px;border-radius:10px;background-color:%s;color:#ffffff;text-align:center;line-height:36px;font-weight:bold;">I</div>
+                    <h2 style="margin:16px 0 8px;">You're invited</h2>
+                    <p style="color:#475569;line-height:1.6;">You've been invited to join <strong>%s</strong> on IntelliMail. Click the button below to accept and get started.</p>
+                    <p style="text-align:center;margin:32px 0;">
+                      <a href="%s" style="background-color:%s;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:10px;font-weight:600;display:inline-block;">Accept Invitation</a>
+                    </p>
+                    <p style="color:#94a3b8;font-size:13px;line-height:1.6;">If you weren't expecting this invitation, you can safely ignore this email.</p>
+                    <p style="color:#94a3b8;font-size:12px;word-break:break-all;">Or paste this link into your browser: %s</p>
+                  </div>
+                </body>
+                </html>
+                """.formatted(color, HtmlUtils.htmlEscape(organizationName), inviteLink, color, inviteLink);
+    }
+
     private String buildHtml(String fullName, String resetLink) {
         return """
                 <!doctype html>

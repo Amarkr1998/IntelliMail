@@ -42,7 +42,11 @@ public class SecurityConfig {
             // network isolation - the management port is never published to
             // the host or proxied by nginx (see docker-compose.yml), only
             // reachable by other containers on the internal Docker network.
-            "/actuator/prometheus"
+            "/actuator/prometheus",
+            // Stripe delivers this server-to-server with no JWT; authenticity
+            // comes from the HMAC signature check in BillingController itself,
+            // not from Spring Security.
+            "/api/billing/webhook"
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;

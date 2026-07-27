@@ -39,7 +39,7 @@ public class TemplateController {
     public ApiResponse<PageResponse<PromptTemplateResponse>> getTemplates(
             @AuthenticationPrincipal UserPrincipal principal,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ApiResponse.success(promptTemplateService.getTemplates(principal.getId(), pageable));
+        return ApiResponse.success(promptTemplateService.getTemplates(principal.getId(), principal.getOrganizationId(), pageable));
     }
 
     @PostMapping
@@ -47,7 +47,7 @@ public class TemplateController {
     public ResponseEntity<ApiResponse<PromptTemplateResponse>> createTemplate(
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody PromptTemplateRequest request) {
-        PromptTemplateResponse response = promptTemplateService.createTemplate(principal.getId(), request);
+        PromptTemplateResponse response = promptTemplateService.createTemplate(principal.getId(), principal.getOrganizationId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Template created", response));
     }
 
