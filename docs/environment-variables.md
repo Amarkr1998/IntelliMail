@@ -45,11 +45,29 @@ All variables are read by [`backend/src/main/resources/application.yml`](../back
 | `SPRING_PROFILES_ACTIVE` | `dev` | `dev` or `prod` (see `application-dev.yml` / `application-prod.yml`) |
 | `UPLOAD_MAX_FILE_SIZE` | `10MB` | Max size for `POST /api/email/extract` file uploads (Spring's `DataSize` syntax, e.g. `20MB`) |
 
+## Google Sign-In (multi-tenant SaaS core)
+
+| Variable | Default | Description |
+|---|---|---|
+| `GOOGLE_OAUTH_CLIENT_ID` | *(empty)* | OAuth 2.0 Web Client ID from Google Cloud Console — see [`saas-setup.md`](saas-setup.md). Not a secret; unset disables the "Sign in with Google" button/endpoint. |
+
+## Stripe Billing (multi-tenant SaaS core)
+
+| Variable | Default | Description |
+|---|---|---|
+| `STRIPE_SECRET_KEY` | *(empty)* | Secret API key from the Stripe Dashboard — see [`saas-setup.md`](saas-setup.md) |
+| `STRIPE_WEBHOOK_SECRET` | *(empty)* | Signing secret for the `/api/billing/webhook` endpoint |
+| `STRIPE_PRICE_ID_STARTER` | *(empty)* | Stripe Price ID for the Starter plan |
+| `STRIPE_PRICE_ID_PRO` | *(empty)* | Stripe Price ID for the Pro plan |
+
+Organizations still get a 14-day trial subscription row with none of these set — checkout/portal/webhook just have nothing to talk to until they're configured.
+
 ## Frontend (`frontend/.env` or `.env.local`)
 
 | Variable | Default | Description |
 |---|---|---|
 | `VITE_API_BASE_URL` | `http://localhost:8080` | Backend base URL the React app calls |
+| `VITE_GOOGLE_CLIENT_ID` | *(empty)* | Same value as `GOOGLE_OAUTH_CLIENT_ID` — baked in at build time |
 
 ## Chrome Extension
 

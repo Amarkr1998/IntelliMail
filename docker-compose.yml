@@ -93,6 +93,11 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       MAIL_FROM: ${MAIL_FROM:-${MAIL_USERNAME}}
       FRONTEND_URL: ${FRONTEND_URL}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      STRIPE_PRICE_ID_STARTER: ${STRIPE_PRICE_ID_STARTER}
+      STRIPE_PRICE_ID_PRO: ${STRIPE_PRICE_ID_PRO}
     depends_on:
       postgres:
         condition: service_healthy
@@ -122,6 +127,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
     image: ghcr.io/amarkr1998/intellimail-frontend:latest
     restart: unless-stopped
     <<: *security-defaults

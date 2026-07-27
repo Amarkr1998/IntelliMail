@@ -16,6 +16,11 @@ COPY . .
 # frontend is ever served from a different origin than the backend.
 ARG VITE_API_BASE_URL=""
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+# Google's Sign-In client ID - not a secret, just an identifier, safe to bake
+# into the public bundle (same one the backend uses server-side to verify the
+# resulting ID token's audience claim).
+ARG VITE_GOOGLE_CLIENT_ID=""
+ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
 RUN npm run build
 
 # ---- Runtime stage --------------------------------------------------------
