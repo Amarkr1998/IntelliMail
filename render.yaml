@@ -1,0 +1,121 @@
+# Render Blueprint - https://render.com/docs/blueprint-spec
+#
+# Deploys IntelliMail as three pieces:
+#   - intellimail-db:       Render-managed PostgreSQL
+#   - intellimail-backend:  Spring Boot API, built from backend/Dockerfile
+#   - intellimail-frontend: the Vite/React SPA, built as a static site (no
+#                           container - cheaper and simpler than running the
+#                           nginx-based frontend/Dockerfile on Render)
+#
+# After the first deploy, two values only exist once Render assigns them -
+# fill these in via the Render dashboard (they're marked `sync: false` below
+# so Render prompts for them instead of guessing):
+#   - intellimail-backend's CORS_ALLOWED_ORIGINS  -> the frontend's onrender.com URL
+#   - intellimail-frontend's VITE_API_BASE_URL    -> the backend's onrender.com URL
+# (Vite bakes VITE_* values in at build time, so changing VITE_API_BASE_URL
+# later requires a manual redeploy of the static site, not just an env change.)
+
+databases:
+  - name: intellimail-db
+    databaseName: intellimail
+    user: intellimail_app
+    plan: free # Render's free Postgres plan expires after 30 days - upgrade before that for anything real.
+
+services:
+  - type: web
+    name: intellimail-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free # Free web services spin down after 15 min idle and cold-start on the next request.
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_HOST
+        fromDatabase:
+          name: intellimail-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: intellimail-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: intellimail-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: intellimail-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: intellimail-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true # Render generates and stores a random value for you.
+      - key: JWT_ACCESS_EXPIRATION_MS
+        value: "900000"
+      - key: JWT_REFRESH_EXPIRATION_MS
+        value: "604800000"
+      - key: UPLOAD_MAX_FILE_SIZE
+        value: 10MB
+      # ---- Set manually in the Render dashboard (secrets / required values) ----
+      - key: AZURE_OPENAI_API_KEY
+        sync: false
+      - key: AZURE_OPENAI_ENDPOINT
+        sync: false
+      - key: AZURE_OPENAI_DEPLOYMENT
+        sync: false
+      - key: AI_SEND_SAMPLING_PARAMETERS
+        value: "true" # set to "false" if your deployment rejects custom temperature/max-tokens
+      - key: AZURE_OPENAI_TEMPERATURE
+        value: "0.7"
+      - key: AZURE_OPENAI_MAX_TOKENS
+        value: "1024"
+      # Frontend's onrender.com URL - only known after the static site's first deploy.
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      # ---- Optional features - leave unset (sync: false, blank) to disable ----
+      - key: MAIL_HOST
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_ID_STARTER
+        sync: false
+      - key: STRIPE_PRICE_ID_PRO
+        sync: false
+
+  - type: web
+    name: intellimail-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    # React Router client-side routes (e.g. /dashboard, /login) must all
+    # resolve to index.html and let the SPA's own router take over -
+    # otherwise a direct link or a page refresh on any non-root route 404s.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      # Backend's onrender.com URL - only known after the backend's first deploy.
+      - key: VITE_API_BASE_URL
+        sync: false
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false

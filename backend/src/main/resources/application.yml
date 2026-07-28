@@ -11,7 +11,11 @@ spring:
       max-request-size: ${UPLOAD_MAX_FILE_SIZE:10MB}
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/intellimail}
+    # DB_URL wins if set (native dev, Docker Compose). Otherwise built from
+    # parts - lets a platform that hands out host/port/database separately
+    # (e.g. Render's `fromDatabase` Blueprint references) wire in without
+    # needing to construct a JDBC URL string itself.
+    url: ${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:intellimail}}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
