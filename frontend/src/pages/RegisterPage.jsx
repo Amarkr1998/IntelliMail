@@ -4,6 +4,7 @@ import { Box, TextField, Button, Link, Alert, Collapse, Divider, Typography } fr
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthLayout from '../components/common/AuthLayout';
+import PasswordField from '../components/common/PasswordField';
 import RegisterIllustration from '../components/illustrations/RegisterIllustration';
 import GoogleLoginButton from '../components/GoogleLoginButton';
 
@@ -76,24 +77,18 @@ export default function RegisterPage() {
           error={Boolean(errors.email)}
           helperText={errors.email?.message}
         />
-        <TextField
+        <PasswordField
           label="Password"
-          type="password"
-          fullWidth
-          margin="normal"
-          {...registerField('password', {
+          registration={registerField('password', {
             required: 'Password is required',
             minLength: { value: 8, message: 'Password must be at least 8 characters' },
           })}
           error={Boolean(errors.password)}
           helperText={errors.password?.message}
         />
-        <TextField
+        <PasswordField
           label="Confirm Password"
-          type="password"
-          fullWidth
-          margin="normal"
-          {...registerField('confirmPassword', {
+          registration={registerField('confirmPassword', {
             required: 'Please confirm your password',
             validate: (value) => value === password || 'Passwords do not match',
           })}

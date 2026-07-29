@@ -4,6 +4,7 @@ import { Box, TextField, Button, Link, Alert, Collapse, Divider, Typography } fr
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthLayout from '../components/common/AuthLayout';
+import PasswordField from '../components/common/PasswordField';
 import LoginIllustration from '../components/illustrations/LoginIllustration';
 import GoogleLoginButton from '../components/GoogleLoginButton';
 
@@ -65,12 +66,9 @@ export default function LoginPage() {
           error={Boolean(errors.email)}
           helperText={errors.email?.message}
         />
-        <TextField
+        <PasswordField
           label="Password"
-          type="password"
-          fullWidth
-          margin="normal"
-          {...register('password', { required: 'Password is required' })}
+          registration={register('password', { required: 'Password is required' })}
           error={Boolean(errors.password)}
           helperText={errors.password?.message}
         />

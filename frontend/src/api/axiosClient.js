@@ -11,7 +11,7 @@ const axiosClient = axios.create({
 });
 
 axiosClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  const token = sessionStorage.getItem(ACCESS_TOKEN_KEY);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -31,8 +31,8 @@ function onRefreshed(newAccessToken) {
 }
 
 function clearSessionAndRedirect() {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+  sessionStorage.removeItem(REFRESH_TOKEN_KEY);
   if (window.location.pathname !== '/login') {
     window.location.href = '/login';
   }
@@ -51,7 +51,7 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+    const refreshToken = sessionStorage.getItem(REFRESH_TOKEN_KEY);
     if (!refreshToken) {
       clearSessionAndRedirect();
       return Promise.reject(error);
@@ -64,8 +64,8 @@ axiosClient.interceptors.response.use(
       try {
         const { data } = await axios.post(`${baseURL}/api/auth/refresh`, { refreshToken });
         const { accessToken, refreshToken: newRefreshToken } = data.data;
-        localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-        localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+        sessionStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+        sessionStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
         onRefreshed(accessToken);
       } catch (refreshError) {
         pendingRequests = [];

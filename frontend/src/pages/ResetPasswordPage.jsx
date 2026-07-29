@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { TextField, Button, Link, Alert, Collapse } from '@mui/material';
+import { Button, Link, Alert, Collapse } from '@mui/material';
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
 import { resetPassword } from '../api/authApi';
 import { useSnackbar } from '../context/SnackbarContext';
 import AuthLayout from '../components/common/AuthLayout';
+import PasswordField from '../components/common/PasswordField';
 import ResetPasswordIllustration from '../components/illustrations/ResetPasswordIllustration';
 
 export default function ResetPasswordPage() {
@@ -61,24 +62,18 @@ export default function ResetPasswordPage() {
             </Alert>
           </Collapse>
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <TextField
+            <PasswordField
               label="New Password"
-              type="password"
-              fullWidth
-              margin="normal"
-              {...register('password', {
+              registration={register('password', {
                 required: 'Password is required',
                 minLength: { value: 8, message: 'Password must be at least 8 characters' },
               })}
               error={Boolean(errors.password)}
               helperText={errors.password?.message}
             />
-            <TextField
+            <PasswordField
               label="Confirm New Password"
-              type="password"
-              fullWidth
-              margin="normal"
-              {...register('confirmPassword', {
+              registration={register('confirmPassword', {
                 required: 'Please confirm your password',
                 validate: (value) => value === password || 'Passwords do not match',
               })}
