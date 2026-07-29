@@ -51,9 +51,13 @@ function NewTaskTab() {
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
   const [actioning, setActioning] = useState(false);
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+
+  const contextError = attemptedSubmit && !context.trim() ? 'Instructions are required' : undefined;
 
   const handleSubmit = async () => {
-    if (!goal.trim()) {
+    setAttemptedSubmit(true);
+    if (!goal.trim() || !context.trim()) {
       return;
     }
     setLoading(true);
@@ -62,6 +66,7 @@ function NewTaskTab() {
       setResponse(result);
       setConversationId(result.conversationId);
       setGoal('');
+      setAttemptedSubmit(false);
       showSnackbar('Agent finished', 'success');
     } catch (err) {
       showSnackbar(err?.response?.data?.message || 'Agent task failed', 'error');
@@ -75,6 +80,7 @@ function NewTaskTab() {
     setResponse(null);
     setGoal('');
     setContext('');
+    setAttemptedSubmit(false);
   };
 
   const handleConfirm = async () => {
@@ -130,19 +136,20 @@ function NewTaskTab() {
             placeholder="e.g. Reply politely to this email, then translate the reply to German"
           />
           <EmailEditor
-            label="Context (optional)"
+            label="Instructions"
             value={context}
             onChange={setContext}
             minRows={6}
             maxLength={20000}
             placeholder="Paste the original email or any other background text here"
+            error={contextError}
           />
           <Button
             variant="contained"
             size="large"
             endIcon={<AutoAwesomeIcon />}
             onClick={handleSubmit}
-            disabled={loading || !goal.trim()}
+            disabled={loading || !goal.trim() || (attemptedSubmit && !context.trim())}
           >
             {loading ? 'Working…' : 'Run Agent'}
           </Button>
