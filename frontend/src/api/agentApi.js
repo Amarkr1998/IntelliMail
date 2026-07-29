@@ -14,3 +14,6 @@ export const listTasks = (page = 0, size = 20) =>
 
 export const getTask = (taskId) =>
   axiosClient.get(`/api/agent/tasks/${taskId}`).then((res) => res.data.data);
+
+export const downloadPdf = (taskId) =>
+  axiosClient.get(`/api/agent/tasks/${taskId}/export/pdf`, { responseType: 'blob' }).then((res) => res.data);

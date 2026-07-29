@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Box,
   Paper,
@@ -20,6 +20,7 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import EmailEditor from '../components/EmailEditor';
 import MarkdownViewer from '../components/MarkdownViewer';
 import AgentStepsTimeline from '../components/AgentStepsTimeline';
+import ExportMenu from '../components/ExportMenu';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import Loader from '../components/Loader';
 import PageHeader from '../components/common/PageHeader';
@@ -52,6 +53,8 @@ function NewTaskTab() {
   const [response, setResponse] = useState(null);
   const [actioning, setActioning] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+  const [lastGoal, setLastGoal] = useState('');
+  const contentRef = useRef(null);
 
   const contextError = attemptedSubmit && !context.trim() ? 'Instructions are required' : undefined;
 
@@ -64,6 +67,7 @@ function NewTaskTab() {
     try {
       const result = await agentApi.runTask(goal, context || null, conversationId);
       setResponse(result);
+      setLastGoal(goal);
       setConversationId(result.conversationId);
       setGoal('');
       setAttemptedSubmit(false);
@@ -168,12 +172,20 @@ function NewTaskTab() {
         )}
         {!loading && response && (
           <Paper variant="outlined" sx={{ p: 3 }}>
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
               <Chip size="small" color={STATUS_COLORS[response.status] || 'default'} label={response.status} />
+              {response.finalResult && (
+                <ExportMenu
+                  taskId={response.taskId}
+                  title={lastGoal || 'AI Agent Response'}
+                  content={response.finalResult}
+                  contentRef={contentRef}
+                />
+              )}
             </Stack>
             <AgentStepsTimeline steps={response.steps} />
             {response.finalResult && (
-              <Box sx={{ mt: 2 }}>
+              <Box sx={{ mt: 2 }} ref={contentRef}>
                 <MarkdownViewer content={response.finalResult} />
               </Box>
             )}
@@ -199,6 +211,14 @@ function TaskHistoryTab() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState({});
+  const historyRefs = useRef({});
+
+  const getContentRef = (taskId) => {
+    if (!historyRefs.current[taskId]) {
+      historyRefs.current[taskId] = { current: null };
+    }
+    return historyRefs.current[taskId];
+  };
 
   const load = useCallback(() => {
     setLoading(true);
@@ -250,9 +270,19 @@ function TaskHistoryTab() {
           <AccordionDetails>
             {details[task.id] ? (
               <>
+                {details[task.id].finalResult && (
+                  <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+                    <ExportMenu
+                      taskId={task.id}
+                      title={task.goal}
+                      content={details[task.id].finalResult}
+                      contentRef={getContentRef(task.id)}
+                    />
+                  </Stack>
+                )}
                 <AgentStepsTimeline steps={details[task.id].steps} />
                 {details[task.id].finalResult && (
-                  <Box sx={{ mt: 2 }}>
+                  <Box sx={{ mt: 2 }} ref={(el) => { getContentRef(task.id).current = el; }}>
                     <MarkdownViewer content={details[task.id].finalResult} />
                   </Box>
                 )}

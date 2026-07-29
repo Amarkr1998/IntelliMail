@@ -1,6 +1,7 @@
 package com.intellimail.mail.agent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.intellimail.mail.agent.export.AgentExportService;
 import com.intellimail.mail.agent.reflection.AgentReflectionService;
 import com.intellimail.mail.config.AiProperties;
 import com.intellimail.mail.dto.agent.AgentTaskRequest;
@@ -62,6 +63,8 @@ class AgentOrchestratorTest {
     private AgentPendingActionHolder pendingActionHolder;
     @Mock
     private AgentReflectionService reflectionService;
+    @Mock
+    private AgentExportService agentExportService;
 
     private final AgentTaskMapper agentTaskMapper = new AgentTaskMapperImpl();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -75,7 +78,7 @@ class AgentOrchestratorTest {
     void setUp() {
         orchestrator = new AgentOrchestrator(agentChatClient, agentTaskRepository, agentTaskStepRepository,
                 userRepository, promptTemplateService, stepRecorder, pendingActionHolder, reflectionService,
-                agentTaskMapper, objectMapper, aiProperties);
+                agentTaskMapper, objectMapper, aiProperties, agentExportService);
 
         userId = UUID.randomUUID();
         organizationId = UUID.randomUUID();

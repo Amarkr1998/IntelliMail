@@ -31,6 +31,8 @@
         <springdoc.version>2.8.5</springdoc.version>
         <tika.version>2.9.2</tika.version>
         <stripe.version>33.1.1</stripe.version>
+        <openhtmltopdf.version>1.0.10</openhtmltopdf.version>
+        <flexmark.version>0.64.8</flexmark.version>
     </properties>
 
     <dependencyManagement>
@@ -109,6 +111,18 @@
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers-standard-package</artifactId>
             <version>${tika.version}</version>
+        </dependency>
+
+        <!-- Export: agent responses to PDF -->
+        <dependency>
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-pdfbox</artifactId>
+            <version>${openhtmltopdf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-all</artifactId>
+            <version>${flexmark.version}</version>
         </dependency>
 
         <!-- Database -->

@@ -2,6 +2,7 @@ package com.intellimail.mail.agent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.intellimail.mail.agent.export.AgentExportService;
 import com.intellimail.mail.agent.prompt.AgentSystemPrompts;
 import com.intellimail.mail.agent.reflection.AgentReflectionService;
 import com.intellimail.mail.config.AiProperties;
@@ -61,6 +62,7 @@ public class AgentOrchestrator {
     private final AgentTaskMapper agentTaskMapper;
     private final ObjectMapper objectMapper;
     private final AiProperties aiProperties;
+    private final AgentExportService agentExportService;
 
     @Transactional
     public AgentTaskResponse runTask(UUID userId, UUID organizationId, AgentTaskRequest request) {
@@ -156,6 +158,13 @@ public class AgentOrchestrator {
         AgentTask task = getOwnedTask(userId, taskId);
         List<AgentTaskStep> steps = agentTaskStepRepository.findByAgentTaskIdOrderByStepNumberAsc(taskId);
         return buildResponse(task, steps);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportTaskAsPdf(UUID userId, UUID taskId) {
+        AgentTask task = getOwnedTask(userId, taskId);
+        List<AgentTaskStep> steps = agentTaskStepRepository.findByAgentTaskIdOrderByStepNumberAsc(taskId);
+        return agentExportService.renderTaskAsPdf(task, steps);
     }
 
     private String callAgent(String userMessage, UUID conversationId) {

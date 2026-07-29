@@ -14,6 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -71,5 +74,15 @@ public class AgentController {
     @Operation(summary = "Get one agent task", description = "Full detail including its steps and any pending action.")
     public ApiResponse<AgentTaskResponse> getTask(@AuthenticationPrincipal UserPrincipal principal, @PathVariable UUID id) {
         return ApiResponse.success(agentOrchestrator.getTask(principal.getId(), id));
+    }
+
+    @GetMapping(value = "/tasks/{id}/export/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    @Operation(summary = "Export a task's result as PDF", description = "Branded, paginated PDF of the final result plus the steps taken.")
+    public ResponseEntity<byte[]> exportPdf(@AuthenticationPrincipal UserPrincipal principal, @PathVariable UUID id) {
+        byte[] pdf = agentOrchestrator.exportTaskAsPdf(principal.getId(), id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"agent-response-" + id + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

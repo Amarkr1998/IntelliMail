@@ -34,6 +34,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -133,6 +134,48 @@ class AgentControllerIntegrationTest {
 
         assertThat(promptTemplateRepository.findAll())
                 .noneMatch(t -> "Decline Meeting".equals(t.getName()) && user.getId().equals(t.getOwner().getId()));
+    }
+
+    @Test
+    void exportPdf_forOwnedCompletedTask_returnsRealPdfBytes() throws Exception {
+        String accessToken = registerAndGetAccessToken("agent.export@intellimail.com");
+        User user = userRepository.findByEmail("agent.export@intellimail.com").orElseThrow();
+        AgentTask task = agentTaskRepository.save(completedTask(user));
+
+        byte[] pdf = mockMvc.perform(get("/api/agent/tasks/" + task.getId() + "/export/pdf")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(result -> assertThat(result.getResponse().getContentType()).isEqualTo("application/pdf"))
+                .andReturn().getResponse().getContentAsByteArray();
+
+        assertThat(new String(pdf, 0, 5, java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
+    }
+
+    @Test
+    void exportPdf_forAnotherUsersTask_isRejected() throws Exception {
+        User owner = userRepository.findByEmail(registerAndGetOwnerEmail()).orElseThrow();
+        AgentTask task = agentTaskRepository.save(completedTask(owner));
+
+        String otherUsersToken = registerAndGetAccessToken("agent.export.intruder@intellimail.com");
+
+        mockMvc.perform(get("/api/agent/tasks/" + task.getId() + "/export/pdf")
+                        .header("Authorization", "Bearer " + otherUsersToken))
+                .andExpect(status().isNotFound());
+    }
+
+    private String registerAndGetOwnerEmail() throws Exception {
+        registerAndGetAccessToken("agent.export.owner@intellimail.com");
+        return "agent.export.owner@intellimail.com";
+    }
+
+    private AgentTask completedTask(User user) {
+        return AgentTask.builder()
+                .user(user)
+                .status(AgentTaskStatus.COMPLETED)
+                .goal("Draft a reply confirming the meeting")
+                .finalResult("## Reply\n\nHi Alex, **Tuesday at 3pm** works for me.")
+                .conversationId(UUID.randomUUID())
+                .build();
     }
 
     private AgentTask pendingTask(User user) {
