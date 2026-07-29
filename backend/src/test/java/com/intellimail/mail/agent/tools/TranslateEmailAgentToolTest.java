@@ -39,7 +39,7 @@ class TranslateEmailAgentToolTest {
     void setUp() {
         tool = new TranslateEmailAgentTool(emailService, stepRecorder);
         userId = UUID.randomUUID();
-        AgentExecutionContext.set(userId, null, UUID.randomUUID());
+        AgentExecutionContext.set(userId, null, UUID.randomUUID(), null);
     }
 
     @AfterEach

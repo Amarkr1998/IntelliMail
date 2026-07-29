@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Box,
   Paper,
@@ -17,6 +17,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import EmailEditor from '../components/EmailEditor';
 import MarkdownViewer from '../components/MarkdownViewer';
 import AgentStepsTimeline from '../components/AgentStepsTimeline';
@@ -25,7 +26,10 @@ import Loader from '../components/Loader';
 import PageHeader from '../components/common/PageHeader';
 import EmptyState from '../components/common/EmptyState';
 import * as agentApi from '../api/agentApi';
+import * as emailApi from '../api/emailApi';
 import { useSnackbar } from '../context/SnackbarContext';
+
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // must match backend's UPLOAD_MAX_FILE_SIZE (application.yml)
 
 const STATUS_COLORS = {
   COMPLETED: 'success',
@@ -52,6 +56,10 @@ function NewTaskTab() {
   const [response, setResponse] = useState(null);
   const [actioning, setActioning] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+  const [referenceContext, setReferenceContext] = useState('');
+  const [uploadedFileName, setUploadedFileName] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const contextError = attemptedSubmit && !context.trim() ? 'Instructions are required' : undefined;
 
@@ -62,7 +70,7 @@ function NewTaskTab() {
     }
     setLoading(true);
     try {
-      const result = await agentApi.runTask(goal, context || null, conversationId);
+      const result = await agentApi.runTask(goal, context || null, conversationId, referenceContext || null);
       setResponse(result);
       setConversationId(result.conversationId);
       setGoal('');
@@ -81,6 +89,43 @@ function NewTaskTab() {
     setGoal('');
     setContext('');
     setAttemptedSubmit(false);
+    setReferenceContext('');
+    setUploadedFileName('');
+  };
+
+  const handleFileSelected = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = ''; // reset so selecting the same file again still fires onChange
+    if (!file) {
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      showSnackbar('File is too large (max 10 MB)', 'error');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const result = await emailApi.extractFile(file);
+      setReferenceContext(result.content);
+      setUploadedFileName(result.fileName);
+      showSnackbar(
+        result.truncated
+          ? `"${result.fileName}" was longer than the limit — reference text was truncated`
+          : `"${result.fileName}" will be used as reference context`,
+        result.truncated ? 'warning' : 'success',
+      );
+    } catch (err) {
+      showSnackbar(err?.response?.data?.message || 'Could not extract text from this file', 'error');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const clearReferenceContext = () => {
+    setReferenceContext('');
+    setUploadedFileName('');
   };
 
   const handleConfirm = async () => {
@@ -144,6 +189,50 @@ function NewTaskTab() {
             placeholder="Paste the original email or any other background text here"
             error={contextError}
           />
+
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2,
+              bgcolor: 'action.hover',
+              transition: 'border-color 0.2s ease',
+              borderColor: uploadedFileName ? 'primary.main' : undefined,
+            }}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              hidden
+              accept=".txt,.pdf,.doc,.docx,.rtf,.odt,.html,.md,.csv"
+              onChange={handleFileSelected}
+            />
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: uploadedFileName ? 1 : 0 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<UploadFileIcon />}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? 'Extracting…' : 'Attach a File'}
+              </Button>
+              {uploadedFileName && (
+                <Chip size="small" color="primary" label={uploadedFileName} onDelete={clearReferenceContext} />
+              )}
+            </Stack>
+            {uploadedFileName ? (
+              <Typography variant="caption" color="text.secondary">
+                Every tool the agent calls will automatically have {referenceContext.length.toLocaleString()}{' '}
+                characters from this file available as background reference.
+              </Typography>
+            ) : (
+              <Typography variant="caption" color="text.secondary">
+                Optional: attach a document (PDF, Word, plain text, etc.) for the agent to draw on - e.g. a price
+                list, policy, or spec sheet.
+              </Typography>
+            )}
+          </Paper>
+
           <Button
             variant="contained"
             size="large"

@@ -74,7 +74,7 @@ public class AgentOrchestrator {
                 .conversationId(conversationId)
                 .build());
 
-        AgentExecutionContext.set(userId, organizationId, task.getId());
+        AgentExecutionContext.set(userId, organizationId, task.getId(), request.referenceContext());
         try {
             String userMessage = buildUserMessage(request.goal(), request.context());
 

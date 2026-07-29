@@ -31,7 +31,7 @@ public class FollowupEmailAgentTool {
         AgentExecutionContext.Context ctx = AgentExecutionContext.current();
         try {
             EmailReplyResponse response = emailService.followup(ctx.userId(),
-                    new EmailFollowupRequest(originalContent, instructions, null));
+                    new EmailFollowupRequest(originalContent, instructions, ctx.referenceContext()));
             stepRecorder.record(TOOL_NAME, originalContent, response.content(), AgentStepStatus.SUCCESS);
             return response.content();
         } catch (RuntimeException ex) {

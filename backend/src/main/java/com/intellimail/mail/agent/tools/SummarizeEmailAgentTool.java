@@ -27,7 +27,7 @@ public class SummarizeEmailAgentTool {
     public String summarizeEmail(@ToolParam(description = "The email text to summarize") String content) {
         AgentExecutionContext.Context ctx = AgentExecutionContext.current();
         try {
-            EmailReplyResponse response = emailService.summarize(ctx.userId(), new EmailSummarizeRequest(content, null));
+            EmailReplyResponse response = emailService.summarize(ctx.userId(), new EmailSummarizeRequest(content, ctx.referenceContext()));
             stepRecorder.record(TOOL_NAME, content, response.content(), AgentStepStatus.SUCCESS);
             return response.content();
         } catch (RuntimeException ex) {
