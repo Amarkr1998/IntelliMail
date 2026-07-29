@@ -11,8 +11,6 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
 /** Wraps {@code EmailService.generateReply} as an agent tool. */
 @Component
 @RequiredArgsConstructor
@@ -30,22 +28,16 @@ public class GenerateReplyAgentTool {
     public String generateReply(
             @ToolParam(description = "Full text of the email being replied to") String originalContent,
             @ToolParam(description = "Tone or points to make in the reply, e.g. 'politely decline'", required = false)
-            String instructions,
-            @ToolParam(description = "Id of a saved template to use, from the listTemplates tool", required = false)
-            String promptTemplateId) {
+            String instructions) {
         AgentExecutionContext.Context ctx = AgentExecutionContext.current();
         try {
             EmailReplyResponse response = emailService.generateReply(ctx.userId(),
-                    new EmailGenerateRequest(originalContent, instructions, parseUuid(promptTemplateId), ctx.referenceContext()));
+                    new EmailGenerateRequest(originalContent, instructions, null, null));
             stepRecorder.record(TOOL_NAME, originalContent, response.content(), AgentStepStatus.SUCCESS);
             return response.content();
         } catch (RuntimeException ex) {
             stepRecorder.record(TOOL_NAME, originalContent, "ERROR: " + ex.getMessage(), AgentStepStatus.FAILED);
             return "generateReply failed: " + ex.getMessage();
         }
-    }
-
-    static UUID parseUuid(String value) {
-        return (value == null || value.isBlank()) ? null : UUID.fromString(value.trim());
     }
 }

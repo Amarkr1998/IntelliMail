@@ -42,7 +42,7 @@ class SearchHistoryAgentToolTest {
     void setUp() {
         tool = new SearchHistoryAgentTool(emailRequestRepository, stepRecorder);
         userId = UUID.randomUUID();
-        AgentExecutionContext.set(userId, null, UUID.randomUUID(), null);
+        AgentExecutionContext.set(userId, null, UUID.randomUUID());
     }
 
     @AfterEach

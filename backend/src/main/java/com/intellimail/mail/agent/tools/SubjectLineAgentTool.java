@@ -27,7 +27,7 @@ public class SubjectLineAgentTool {
     public String subjectLine(@ToolParam(description = "The email body to generate a subject line for") String content) {
         AgentExecutionContext.Context ctx = AgentExecutionContext.current();
         try {
-            EmailReplyResponse response = emailService.subjectLine(ctx.userId(), new EmailSubjectRequest(content, ctx.referenceContext()));
+            EmailReplyResponse response = emailService.subjectLine(ctx.userId(), new EmailSubjectRequest(content, null));
             stepRecorder.record(TOOL_NAME, content, response.content(), AgentStepStatus.SUCCESS);
             return response.content();
         } catch (RuntimeException ex) {

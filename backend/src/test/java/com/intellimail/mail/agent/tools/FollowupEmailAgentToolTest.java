@@ -38,7 +38,7 @@ class FollowupEmailAgentToolTest {
     void setUp() {
         tool = new FollowupEmailAgentTool(emailService, stepRecorder);
         userId = UUID.randomUUID();
-        AgentExecutionContext.set(userId, null, UUID.randomUUID(), null);
+        AgentExecutionContext.set(userId, null, UUID.randomUUID());
     }
 
     @AfterEach

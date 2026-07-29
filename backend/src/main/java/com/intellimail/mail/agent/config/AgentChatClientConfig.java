@@ -1,10 +1,8 @@
 package com.intellimail.mail.agent.config;
 
-import com.intellimail.mail.agent.tools.ComposeFromScratchAgentTool;
 import com.intellimail.mail.agent.tools.FollowupEmailAgentTool;
 import com.intellimail.mail.agent.tools.GenerateReplyAgentTool;
 import com.intellimail.mail.agent.tools.ImproveEmailAgentTool;
-import com.intellimail.mail.agent.tools.ListTemplatesAgentTool;
 import com.intellimail.mail.agent.tools.SaveTemplateAgentTool;
 import com.intellimail.mail.agent.tools.SearchHistoryAgentTool;
 import com.intellimail.mail.agent.tools.SubjectLineAgentTool;
@@ -39,9 +37,7 @@ public class AgentChatClientConfig {
             SubjectLineAgentTool subjectLineAgentTool,
             FollowupEmailAgentTool followupEmailAgentTool,
             SaveTemplateAgentTool saveTemplateAgentTool,
-            SearchHistoryAgentTool searchHistoryAgentTool,
-            ComposeFromScratchAgentTool composeFromScratchAgentTool,
-            ListTemplatesAgentTool listTemplatesAgentTool) {
+            SearchHistoryAgentTool searchHistoryAgentTool) {
         return ChatClient.builder(chatModel)
                 .defaultTools(
                         generateReplyAgentTool,
@@ -51,9 +47,7 @@ public class AgentChatClientConfig {
                         subjectLineAgentTool,
                         followupEmailAgentTool,
                         saveTemplateAgentTool,
-                        searchHistoryAgentTool,
-                        composeFromScratchAgentTool,
-                        listTemplatesAgentTool)
+                        searchHistoryAgentTool)
                 .defaultAdvisors(MessageChatMemoryAdvisor.builder(agentChatMemory).build())
                 .build();
     }

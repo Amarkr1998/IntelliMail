@@ -38,7 +38,7 @@ class SubjectLineAgentToolTest {
     void setUp() {
         tool = new SubjectLineAgentTool(emailService, stepRecorder);
         userId = UUID.randomUUID();
-        AgentExecutionContext.set(userId, null, UUID.randomUUID(), null);
+        AgentExecutionContext.set(userId, null, UUID.randomUUID());
     }
 
     @AfterEach

@@ -40,7 +40,7 @@ public class ImproveEmailAgentTool {
             RequestType styleType = RequestType.valueOf(style.trim().toUpperCase());
             AgentExecutionContext.Context ctx = AgentExecutionContext.current();
             EmailReplyResponse response = emailService.improve(ctx.userId(),
-                    new EmailImproveRequest(content, styleType, ctx.referenceContext()));
+                    new EmailImproveRequest(content, styleType, null));
             stepRecorder.record(TOOL_NAME, content, response.content(), AgentStepStatus.SUCCESS);
             return response.content();
         } catch (RuntimeException ex) {

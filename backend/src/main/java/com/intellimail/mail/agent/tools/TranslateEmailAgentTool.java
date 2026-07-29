@@ -30,7 +30,7 @@ public class TranslateEmailAgentTool {
         AgentExecutionContext.Context ctx = AgentExecutionContext.current();
         try {
             EmailReplyResponse response = emailService.translate(ctx.userId(),
-                    new EmailTranslateRequest(content, targetLanguage, ctx.referenceContext()));
+                    new EmailTranslateRequest(content, targetLanguage, null));
             stepRecorder.record(TOOL_NAME, content, response.content(), AgentStepStatus.SUCCESS);
             return response.content();
         } catch (RuntimeException ex) {

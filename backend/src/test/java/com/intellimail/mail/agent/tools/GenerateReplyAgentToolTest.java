@@ -40,7 +40,7 @@ class GenerateReplyAgentToolTest {
     void setUp() {
         tool = new GenerateReplyAgentTool(emailService, stepRecorder);
         userId = UUID.randomUUID();
-        AgentExecutionContext.set(userId, null, UUID.randomUUID(), null);
+        AgentExecutionContext.set(userId, null, UUID.randomUUID());
     }
 
     @AfterEach
@@ -55,7 +55,7 @@ class GenerateReplyAgentToolTest {
                 "Sure, Tuesday works.", "gpt-4o", 1, 50, 500L, false, Instant.now());
         when(emailService.generateReply(eq(userId), any(EmailGenerateRequest.class))).thenReturn(response);
 
-        String result = tool.generateReply("Can we meet Tuesday?", "Be polite", null);
+        String result = tool.generateReply("Can we meet Tuesday?", "Be polite");
 
         assertThat(result).isEqualTo("Sure, Tuesday works.");
         ArgumentCaptor<EmailGenerateRequest> captor = ArgumentCaptor.forClass(EmailGenerateRequest.class);
@@ -66,29 +66,11 @@ class GenerateReplyAgentToolTest {
     }
 
     @Test
-    void generateReply_threadsReferenceContext_andParsesPromptTemplateId() {
-        AgentExecutionContext.clear();
-        AgentExecutionContext.set(userId, null, UUID.randomUUID(), "Price list: Basic $10, Pro $30");
-        EmailReplyResponse response = new EmailReplyResponse(
-                UUID.randomUUID(), UUID.randomUUID(), RequestType.GENERATE_REPLY,
-                "Sure.", "gpt-4o", 1, 10, 100L, false, Instant.now());
-        when(emailService.generateReply(eq(userId), any(EmailGenerateRequest.class))).thenReturn(response);
-        UUID templateId = UUID.randomUUID();
-
-        tool.generateReply("content", null, templateId.toString());
-
-        ArgumentCaptor<EmailGenerateRequest> captor = ArgumentCaptor.forClass(EmailGenerateRequest.class);
-        verify(emailService).generateReply(eq(userId), captor.capture());
-        assertThat(captor.getValue().referenceContext()).isEqualTo("Price list: Basic $10, Pro $30");
-        assertThat(captor.getValue().promptTemplateId()).isEqualTo(templateId);
-    }
-
-    @Test
     void generateReply_whenEmailServiceThrows_recordsFailedStep_andReturnsErrorString_ratherThanPropagating() {
         when(emailService.generateReply(eq(userId), any(EmailGenerateRequest.class)))
                 .thenThrow(new AiGenerationException("Azure OpenAI request failed"));
 
-        String result = tool.generateReply("content", null, null);
+        String result = tool.generateReply("content", null);
 
         assertThat(result).contains("generateReply failed");
         verify(stepRecorder).record(eq("generateReply"), any(), any(), eq(AgentStepStatus.FAILED));

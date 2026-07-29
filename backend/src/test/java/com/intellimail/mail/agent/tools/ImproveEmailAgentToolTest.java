@@ -40,7 +40,7 @@ class ImproveEmailAgentToolTest {
     void setUp() {
         tool = new ImproveEmailAgentTool(emailService, stepRecorder);
         userId = UUID.randomUUID();
-        AgentExecutionContext.set(userId, null, UUID.randomUUID(), null);
+        AgentExecutionContext.set(userId, null, UUID.randomUUID());
     }
 
     @AfterEach
