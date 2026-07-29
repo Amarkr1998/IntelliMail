@@ -27,6 +27,7 @@ export default function ComposeAssistantPage() {
   const [customPrompt, setCustomPrompt] = useState('');
   const [templateId, setTemplateId] = useState('');
   const [templates, setTemplates] = useState([]);
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
   const [loading, setLoading] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [reply, setReply] = useState(null);
@@ -51,10 +52,24 @@ export default function ComposeAssistantPage() {
 
   const handleTabChange = (_, value) => {
     setTab(value);
+    setAttemptedSubmit(false);
     resetOutput();
   };
 
+  const instructionsRequired = tab === 'generate' || tab === 'followup';
+  const customPromptRequired = tab === 'custom';
+  const instructionsError = attemptedSubmit && instructionsRequired && !instructions.trim() ? 'Instructions are required' : undefined;
+  const customPromptError = attemptedSubmit && customPromptRequired && !customPrompt.trim() ? 'Custom prompt is required' : undefined;
+
   const handleSubmit = async () => {
+    setAttemptedSubmit(true);
+    if (instructionsRequired && !instructions.trim()) {
+      return;
+    }
+    if (customPromptRequired && !customPrompt.trim()) {
+      return;
+    }
+
     setLoading(true);
     resetOutput();
     try {
@@ -204,11 +219,12 @@ export default function ComposeAssistantPage() {
 
             {(tab === 'generate' || tab === 'followup') && (
               <EmailEditor
-                label="Instructions (optional)"
+                label="Instructions"
                 value={instructions}
                 onChange={setInstructions}
                 minRows={2}
                 maxLength={2000}
+                error={instructionsError}
               />
             )}
 
@@ -240,11 +256,12 @@ export default function ComposeAssistantPage() {
                   ))}
                 </TextField>
                 <EmailEditor
-                  label="Custom Prompt (optional)"
+                  label="Custom Prompt"
                   value={customPrompt}
                   onChange={setCustomPrompt}
                   minRows={2}
                   maxLength={5000}
+                  error={customPromptError}
                 />
               </>
             )}
@@ -308,7 +325,12 @@ export default function ComposeAssistantPage() {
               size="large"
               endIcon={<AutoAwesomeIcon />}
               onClick={handleSubmit}
-              disabled={loading || !content}
+              disabled={
+                loading ||
+                !content ||
+                (instructionsRequired && attemptedSubmit && !instructions.trim()) ||
+                (customPromptRequired && attemptedSubmit && !customPrompt.trim())
+              }
             >
               {loading ? 'Generating…' : 'Generate with AI'}
             </Button>

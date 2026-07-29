@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { AppBar, Toolbar, Typography, IconButton, Avatar, Menu, MenuItem, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
@@ -49,6 +51,12 @@ export default function Navbar({ onMenuClick }) {
           sx={{ mr: 1, display: { md: 'none' }, minWidth: 44, minHeight: 44 }}
         >
           <MenuIcon />
+        </IconButton>
+        <IconButton onClick={() => navigate(-1)} aria-label="Go back" sx={{ minWidth: 40, minHeight: 40 }}>
+          <ArrowBackIcon fontSize="small" />
+        </IconButton>
+        <IconButton onClick={() => navigate(1)} aria-label="Go forward" sx={{ mr: 1, minWidth: 40, minHeight: 40 }}>
+          <ArrowForwardIcon fontSize="small" />
         </IconButton>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
           <Box

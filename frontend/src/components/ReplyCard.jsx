@@ -3,15 +3,27 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import MarkdownViewer from './MarkdownViewer';
+import useTextToSpeech from '../hooks/useTextToSpeech';
 import { useSnackbar } from '../context/SnackbarContext';
 
 export default function ReplyCard({ reply, onToggleFavorite, onRegenerate, regenerating }) {
   const { showSnackbar } = useSnackbar();
+  const { supported: speechSupported, speaking, toggleSpeak } = useTextToSpeech();
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(reply.content);
     showSnackbar('Copied to clipboard', 'success');
+  };
+
+  const handleToggleSpeak = () => {
+    if (!speechSupported) {
+      showSnackbar('Text-to-speech is not supported in this browser', 'error');
+      return;
+    }
+    toggleSpeak(reply.content);
   };
 
   return (
@@ -31,6 +43,11 @@ export default function ReplyCard({ reply, onToggleFavorite, onRegenerate, regen
         <Tooltip title="Copy">
           <IconButton onClick={handleCopy} aria-label="Copy reply">
             <ContentCopyIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={speaking ? 'Stop reading' : 'Read aloud'}>
+          <IconButton onClick={handleToggleSpeak} color={speaking ? 'primary' : 'default'} aria-label={speaking ? 'Stop reading reply aloud' : 'Read reply aloud'}>
+            {speaking ? <VolumeOffIcon fontSize="small" /> : <VolumeUpIcon fontSize="small" />}
           </IconButton>
         </Tooltip>
         <Tooltip title={reply.favorite ? 'Unfavorite' : 'Favorite'}>

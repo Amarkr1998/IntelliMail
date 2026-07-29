@@ -88,12 +88,35 @@ export default function useSpeechRecognition({ language = 'en-US' } = {}) {
     }
     setError(null);
     setInterimTranscript('');
-    try {
-      recognitionRef.current.start();
-      setListening(true);
-    } catch {
-      // start() throws InvalidStateError if a session is already starting/running; safe to ignore.
+
+    const attemptStart = () => {
+      try {
+        recognitionRef.current.start();
+        setListening(true);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    if (attemptStart()) {
+      return;
     }
+
+    // start() throws InvalidStateError when a previous session hasn't fully
+    // torn down yet (its onend hasn't fired), which is exactly what made the
+    // mic button silently "do nothing" on a quick stop-then-start - force an
+    // abort and retry once shortly after, rather than swallowing the failure.
+    try {
+      recognitionRef.current.abort();
+    } catch {
+      // ignore - already stopped
+    }
+    setTimeout(() => {
+      if (!attemptStart()) {
+        setError('Could not start voice input. Please try again.');
+      }
+    }, 200);
   }, [listening]);
 
   const stop = useCallback(() => {
