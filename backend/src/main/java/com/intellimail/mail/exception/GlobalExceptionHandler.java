@@ -170,6 +170,11 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("The billing service is temporarily unavailable. Please try again."));
     }
 
+    @ExceptionHandler(AgentTaskNotAwaitingConfirmationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAgentTaskNotAwaitingConfirmation(AgentTaskNotAwaitingConfirmationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception ex) {
         log.error("Unhandled exception", ex);

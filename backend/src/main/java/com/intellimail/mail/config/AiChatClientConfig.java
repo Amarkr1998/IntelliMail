@@ -15,7 +15,12 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AiChatClientConfig {
 
-    @Bean
+    // Named explicitly (rather than relying on the method-name-as-bean-name
+    // default) since agent.config.AgentChatClientConfig introduces a second
+    // ChatClient bean - every injection site now disambiguates via
+    // @Qualifier("chatClient") to avoid Spring failing to autowire with two
+    // ChatClient candidates present.
+    @Bean("chatClient")
     public ChatClient chatClient(ChatModel chatModel) {
         return ChatClient.builder(chatModel).build();
     }

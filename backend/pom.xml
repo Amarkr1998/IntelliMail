@@ -203,6 +203,11 @@
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                    <!-- Spring AI's tool-calling schema generation reflects over @Tool
+                         method parameter names (see agent/tools/*) - without -parameters,
+                         reflection falls back to synthetic names like "arg0", breaking the
+                         JSON schema the model sees. -->
+                    <parameters>true</parameters>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>

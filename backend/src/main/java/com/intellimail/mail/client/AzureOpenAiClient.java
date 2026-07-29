@@ -10,6 +10,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
@@ -46,7 +47,7 @@ import reactor.core.publisher.Flux;
 @Slf4j
 public class AzureOpenAiClient {
 
-    private final ChatClient chatClient;
+    private final @Qualifier("chatClient") ChatClient chatClient;
     private final AiProperties aiProperties;
 
     public AiGenerationResult generate(PreparedPrompt prompt) {

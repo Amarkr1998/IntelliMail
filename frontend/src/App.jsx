@@ -12,6 +12,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import AcceptInvitationPage from './pages/AcceptInvitationPage';
 import ComposeAssistantPage from './pages/ComposeAssistantPage';
+import AgentPage from './pages/AgentPage';
 import VoiceAssistantPage from './pages/VoiceAssistantPage';
 import HistoryPage from './pages/HistoryPage';
 import TemplatesPage from './pages/TemplatesPage';
@@ -54,6 +55,7 @@ export default function App() {
                     }
                   />
                   <Route path="/compose" element={<ComposeAssistantPage />} />
+                  <Route path="/agent" element={<AgentPage />} />
                   <Route path="/voice-ai" element={<VoiceAssistantPage />} />
                   <Route path="/history" element={<HistoryPage />} />
                   <Route path="/templates" element={<TemplatesPage />} />

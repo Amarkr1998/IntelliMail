@@ -2,6 +2,7 @@ import { Drawer, List, ListItemButton, ListItemIcon, ListItemText, ListSubheader
 import { useTheme } from '@mui/material/styles';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import EditNoteIcon from '@mui/icons-material/EditNote';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 import MicIcon from '@mui/icons-material/Mic';
 import HistoryIcon from '@mui/icons-material/History';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -17,6 +18,7 @@ export const drawerWidth = 220;
 const mainNavItems = [
   { label: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
   { label: 'Compose Assistant', path: '/compose', icon: <EditNoteIcon /> },
+  { label: 'AI Agent', path: '/agent', icon: <SmartToyIcon /> },
   { label: 'Voice AI', path: '/voice-ai', icon: <MicIcon /> },
   { label: 'History', path: '/history', icon: <HistoryIcon /> },
   { label: 'Templates', path: '/templates', icon: <ArticleIcon /> },
