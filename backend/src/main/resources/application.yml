@@ -79,6 +79,23 @@ spring:
             # instead - which Spring AI 1.0.0 doesn't yet expose. See
             # AzureOpenAiClient's class Javadoc for the full explanation. If your
             # deployment supports custom sampling params, re-add them here.
+    # AI agent conversation memory (see agent/config/AgentMemoryConfig) is
+    # backed by Postgres via spring-ai-starter-model-chat-memory-repository-jdbc.
+    # Schema is owned by Flyway (V21) like every other table in this app -
+    # never let this starter's own initializer create it too.
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: never
+
+  # ChatMemoryAutoConfiguration would otherwise register a second, unused
+  # default in-memory ChatMemory/ChatMemoryRepository pair alongside the JDBC
+  # ones AgentMemoryConfig actually wires up - excluded to remove any risk of
+  # bean-resolution ambiguity rather than relying on by-name disambiguation.
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.model.chat.memory.autoconfigure.ChatMemoryAutoConfiguration
 
 server:
   port: ${SERVER_PORT:8080}

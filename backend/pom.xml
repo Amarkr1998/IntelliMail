@@ -94,6 +94,14 @@
             <artifactId>spring-ai-starter-model-azure-openai</artifactId>
         </dependency>
 
+        <!-- Persists the AI Agent's short-term conversation memory (see
+             agent/config/AgentMemoryConfig) to Postgres instead of an
+             in-process map, so it survives backend restarts. -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-chat-memory-repository-jdbc</artifactId>
+        </dependency>
+
         <!-- Billing -->
         <dependency>
             <groupId>com.stripe</groupId>
