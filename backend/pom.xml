@@ -44,6 +44,26 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+            <!-- tika-parser-pdf-module (via pdfbox-tools) and
+                 openhtmltopdf-pdfbox each pull a different PDFBox version
+                 (2.0.31 vs 2.0.24) - left to Maven's own mediation, the
+                 older 2.0.24 silently won, and Tika's PDF parser calling a
+                 2.0.31-only method (AccessPermission.canPrintFaithful())
+                 failed at runtime with NoSuchMethodError, confirmed live via
+                 a real PDF upload. Pinned to the newer version both
+                 depend on transitively anyway - 2.0.31 is a same-branch
+                 patch release, not a breaking upgrade for either consumer. -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>2.0.31</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>xmpbox</artifactId>
+                <version>2.0.31</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
