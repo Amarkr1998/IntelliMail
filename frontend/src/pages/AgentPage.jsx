@@ -258,7 +258,6 @@ function NewTaskTab() {
           continue;
         }
         try {
-          // eslint-disable-next-line no-await-in-loop
           const result = await emailApi.extractFile(file);
           setFiles((prev) => [
             ...prev,

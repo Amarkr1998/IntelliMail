@@ -55,7 +55,7 @@ export default function AcceptInvitationPage() {
           </Stack>
         ) : (
           <Stack spacing={2}>
-            <Typography>You've been invited to join an organization on IntelliMail.</Typography>
+            <Typography>You&apos;ve been invited to join an organization on IntelliMail.</Typography>
             <Button variant="contained" onClick={handleAccept} disabled={submitting}>
               {submitting ? 'Joining…' : 'Accept invitation'}
             </Button>

@@ -315,7 +315,7 @@ export default function ComposeAssistantPage() {
               ) : (
                 <Typography variant="caption" color="text.secondary">
                   Optional: attach a document (PDF, Word, plain text, etc.) for the AI to use as background
-                  information — e.g. a price list, policy, or spec sheet. It won't replace the text above.
+                  information — e.g. a price list, policy, or spec sheet. It won&apos;t replace the text above.
                 </Typography>
               )}
             </Paper>
