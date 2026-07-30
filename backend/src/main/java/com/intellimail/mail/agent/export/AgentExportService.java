@@ -3,6 +3,8 @@ package com.intellimail.mail.agent.export;
 import com.intellimail.mail.entity.AgentTask;
 import com.intellimail.mail.entity.AgentTaskStep;
 import com.intellimail.mail.exception.ExportException;
+import com.openhtmltopdf.extend.FSSupplier;
+import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder.FontStyle;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
@@ -13,6 +15,7 @@ import org.springframework.web.util.HtmlUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -29,6 +32,28 @@ public class AgentExportService {
 
     private static final DateTimeFormatter GENERATED_AT_FORMAT =
             DateTimeFormatter.ofPattern("MMMM d, yyyy 'at' h:mm a 'UTC'").withZone(ZoneOffset.UTC);
+
+    /**
+     * The AI Agent's Translate tool accepts any target language as free text, so the
+     * PDF renderer's default Latin-only font isn't enough - without a matching font,
+     * non-Latin responses render as boxes (missing-glyph placeholders) even though the
+     * PDF itself "succeeds". These five families, registered as fallbacks after the
+     * default sans-serif, cover every script the app's languages actually use.
+     */
+    private record FontFamily(String name, String regularResource, String boldResource) {
+    }
+
+    private static final List<FontFamily> EMBEDDED_FONTS = List.of(
+            new FontFamily("Noto Sans", "/fonts/NotoSans-Regular.ttf", "/fonts/NotoSans-Bold.ttf"),
+            new FontFamily("Noto Sans KR", "/fonts/NotoSansKR-Regular.ttf", "/fonts/NotoSansKR-Bold.ttf"),
+            new FontFamily("Noto Sans JP", "/fonts/NotoSansJP-Regular.ttf", "/fonts/NotoSansJP-Bold.ttf"),
+            new FontFamily("Noto Sans SC", "/fonts/NotoSansSC-Regular.ttf", "/fonts/NotoSansSC-Bold.ttf"),
+            new FontFamily("Noto Sans Devanagari", "/fonts/NotoSansDevanagari-Regular.ttf", "/fonts/NotoSansDevanagari-Bold.ttf"));
+
+    private static final String FONT_FAMILY_STACK = EMBEDDED_FONTS.stream()
+            .map(f -> "'" + f.name() + "'")
+            .reduce((a, b) -> a + ", " + b)
+            .orElseThrow() + ", sans-serif";
 
     private final Parser markdownParser;
     private final HtmlRenderer markdownRenderer;
@@ -48,6 +73,7 @@ public class AgentExportService {
         try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
+            registerFonts(builder);
             builder.withHtmlContent(fullHtml, null);
             builder.toStream(output);
             builder.run();
@@ -55,6 +81,17 @@ public class AgentExportService {
         } catch (IOException ex) {
             throw new ExportException("Failed to render PDF export", ex);
         }
+    }
+
+    private void registerFonts(PdfRendererBuilder builder) {
+        for (FontFamily font : EMBEDDED_FONTS) {
+            builder.useFont(classpathFont(font.regularResource()), font.name(), 400, FontStyle.NORMAL, true);
+            builder.useFont(classpathFont(font.boldResource()), font.name(), 700, FontStyle.NORMAL, true);
+        }
+    }
+
+    private static FSSupplier<InputStream> classpathFont(String resourcePath) {
+        return () -> AgentExportService.class.getResourceAsStream(resourcePath);
     }
 
     private String buildDocument(AgentTask task, List<AgentTaskStep> steps, String bodyHtml) {
@@ -86,7 +123,7 @@ public class AgentExportService {
                   %s
                 </body>
                 </html>
-                """.formatted(CSS, generatedAt, goal, status, generatedAt, bodyHtml, buildStepsSection(steps));
+                """.formatted(CSS_RENDERED, generatedAt, goal, status, generatedAt, bodyHtml, buildStepsSection(steps));
     }
 
     private String buildStepsSection(List<AgentTaskStep> steps) {
@@ -125,14 +162,14 @@ public class AgentExportService {
               @bottom-center { content: element(footer); }
             }
             #page-header { position: running(header); border-bottom: 1px solid #D6D3F7; padding-bottom: 8px; width: 100%; }
-            #page-header .brand { font-size: 16px; font-weight: bold; color: #4338CA; font-family: sans-serif; }
-            #page-header .doc-type { font-size: 9px; color: #666666; font-family: sans-serif; letter-spacing: 1px; text-transform: uppercase; }
+            #page-header .brand { font-size: 16px; font-weight: bold; color: #4338CA; font-family: %%FONT_STACK%%; }
+            #page-header .doc-type { font-size: 9px; color: #666666; font-family: %%FONT_STACK%%; letter-spacing: 1px; text-transform: uppercase; }
             #page-footer { position: running(footer); border-top: 1px solid #D6D3F7; padding-top: 6px; width: 100%;
-                           font-size: 8px; color: #888888; font-family: sans-serif; }
+                           font-size: 8px; color: #888888; font-family: %%FONT_STACK%%; }
             #page-footer .page-count { float: right; }
             .pagenumber:before { content: counter(page); }
             .pagecount:before { content: counter(pages); }
-            body { font-family: sans-serif; font-size: 11px; color: #1B1E2B; }
+            body { font-family: %%FONT_STACK%%; font-size: 11px; color: #1B1E2B; }
             .doc-title { font-size: 20px; margin: 0 0 14px 0; color: #1B1E2B; }
             .section-title { font-size: 14px; margin: 24px 0 8px 0; color: #1B1E2B; border-top: 1px solid #DFE2ED; padding-top: 14px; }
             .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 10px; }
@@ -151,4 +188,6 @@ public class AgentExportService {
             .steps-table th, .steps-table td { border: 1px solid #DFE2ED; padding: 5px 7px; text-align: left; vertical-align: top; }
             .steps-table th { background: #EDEFF7; }
             """;
+
+    private static final String CSS_RENDERED = CSS.replace("%%FONT_STACK%%", FONT_FAMILY_STACK);
 }
