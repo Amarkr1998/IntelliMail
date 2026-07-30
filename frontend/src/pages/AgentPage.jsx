@@ -47,30 +47,24 @@ function pendingActionDescription(pendingAction) {
 function NewTaskTab() {
   const { showSnackbar } = useSnackbar();
   const [goal, setGoal] = useState('');
-  const [context, setContext] = useState('');
   const [conversationId, setConversationId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
   const [actioning, setActioning] = useState(false);
-  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
   const [lastGoal, setLastGoal] = useState('');
   const contentRef = useRef(null);
 
-  const contextError = attemptedSubmit && !context.trim() ? 'Instructions are required' : undefined;
-
   const handleSubmit = async () => {
-    setAttemptedSubmit(true);
-    if (!goal.trim() || !context.trim()) {
+    if (!goal.trim()) {
       return;
     }
     setLoading(true);
     try {
-      const result = await agentApi.runTask(goal, context || null, conversationId);
+      const result = await agentApi.runTask(goal, null, conversationId);
       setResponse(result);
       setLastGoal(goal);
       setConversationId(result.conversationId);
       setGoal('');
-      setAttemptedSubmit(false);
       showSnackbar('Agent finished', 'success');
     } catch (err) {
       showSnackbar(err?.response?.data?.message || 'Agent task failed', 'error');
@@ -83,8 +77,6 @@ function NewTaskTab() {
     setConversationId(null);
     setResponse(null);
     setGoal('');
-    setContext('');
-    setAttemptedSubmit(false);
   };
 
   const handleConfirm = async () => {
@@ -125,7 +117,7 @@ function NewTaskTab() {
         <Stack spacing={2}>
           {conversationId && (
             <Stack direction="row" spacing={1} alignItems="center">
-              <Chip size="small" color="primary" label="Conversation active - follow-ups will use context" />
+              <Chip size="small" color="primary" label="Conversation active - follow-ups will remember this conversation" />
               <Button size="small" startIcon={<RestartAltIcon />} onClick={handleNewConversation}>
                 Start New Conversation
               </Button>
@@ -135,25 +127,16 @@ function NewTaskTab() {
             label="What do you want the agent to do?"
             value={goal}
             onChange={setGoal}
-            minRows={3}
+            minRows={8}
             maxLength={4000}
-            placeholder="e.g. Reply politely to this email, then translate the reply to German"
-          />
-          <EmailEditor
-            label="Instructions"
-            value={context}
-            onChange={setContext}
-            minRows={6}
-            maxLength={20000}
-            placeholder="Paste the original email or any other background text here"
-            error={contextError}
+            placeholder="e.g. Reply politely to this email confirming Tuesday at 3pm, then translate the reply to German"
           />
           <Button
             variant="contained"
             size="large"
             endIcon={<AutoAwesomeIcon />}
             onClick={handleSubmit}
-            disabled={loading || !goal.trim() || (attemptedSubmit && !context.trim())}
+            disabled={loading || !goal.trim()}
           >
             {loading ? 'Working…' : 'Run Agent'}
           </Button>
