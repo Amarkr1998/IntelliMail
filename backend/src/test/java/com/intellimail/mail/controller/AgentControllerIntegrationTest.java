@@ -88,7 +88,7 @@ class AgentControllerIntegrationTest {
                         .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new AgentTaskRequest("Reply politely to this email", "Can we meet Tuesday at 3pm?", null))))
+                                new AgentTaskRequest("Reply politely to this email", "Can we meet Tuesday at 3pm?", null, null))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("COMPLETED"))
                 .andExpect(jsonPath("$.data.finalResult").value("Sure, Tuesday works for me."))
@@ -99,7 +99,7 @@ class AgentControllerIntegrationTest {
     void runTask_withoutToken_isRejectedWithUnauthorized() throws Exception {
         mockMvc.perform(post("/api/agent/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new AgentTaskRequest("goal", null, null))))
+                        .content(objectMapper.writeValueAsString(new AgentTaskRequest("goal", null, null, null))))
                 .andExpect(status().isUnauthorized());
     }
 

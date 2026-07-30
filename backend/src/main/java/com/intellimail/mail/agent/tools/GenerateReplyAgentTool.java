@@ -32,7 +32,7 @@ public class GenerateReplyAgentTool {
         AgentExecutionContext.Context ctx = AgentExecutionContext.current();
         try {
             EmailReplyResponse response = emailService.generateReply(ctx.userId(),
-                    new EmailGenerateRequest(originalContent, instructions, null, null));
+                    new EmailGenerateRequest(originalContent, instructions, null, ctx.referenceContext()));
             stepRecorder.record(TOOL_NAME, originalContent, response.content(), AgentStepStatus.SUCCESS);
             return response.content();
         } catch (RuntimeException ex) {

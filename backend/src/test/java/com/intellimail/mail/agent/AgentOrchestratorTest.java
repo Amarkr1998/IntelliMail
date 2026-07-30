@@ -120,7 +120,7 @@ class AgentOrchestratorTest {
         when(pendingActionHolder.drain()).thenReturn(Optional.empty());
 
         AgentTaskResponse response = orchestrator.runTask(userId, organizationId,
-                new AgentTaskRequest("Reply to this email", "Original email content", null));
+                new AgentTaskRequest("Reply to this email", "Original email content", null, null));
 
         assertThat(response.status()).isEqualTo("COMPLETED");
         assertThat(response.finalResult()).isEqualTo("Here is the drafted reply.");
@@ -141,7 +141,7 @@ class AgentOrchestratorTest {
         when(pendingActionHolder.drain()).thenReturn(Optional.empty());
 
         AgentTaskResponse response = orchestrator.runTask(userId, organizationId,
-                new AgentTaskRequest("Reply to this email", null, null));
+                new AgentTaskRequest("Reply to this email", null, null, null));
 
         assertThat(response.status()).isEqualTo("COMPLETED");
         assertThat(response.finalResult()).isEqualTo("Dear John, here is the reply.");
@@ -160,7 +160,7 @@ class AgentOrchestratorTest {
                 PendingActionType.SAVE_TEMPLATE, Map.of("name", "Decline", "category", "GENERATE_REPLY", "promptText", "..."))));
 
         AgentTaskResponse response = orchestrator.runTask(userId, organizationId,
-                new AgentTaskRequest("Save this as a template", null, null));
+                new AgentTaskRequest("Save this as a template", null, null, null));
 
         assertThat(response.status()).isEqualTo("AWAITING_CONFIRMATION");
         assertThat(response.pendingAction()).isNotNull();
@@ -175,7 +175,7 @@ class AgentOrchestratorTest {
         when(stepRecorder.drain()).thenReturn(List.of());
 
         AgentTaskResponse response = orchestrator.runTask(userId, organizationId,
-                new AgentTaskRequest("Reply to this email", null, null));
+                new AgentTaskRequest("Reply to this email", null, null, null));
 
         assertThat(response.status()).isEqualTo("FAILED");
         assertThat(response.finalResult()).contains("model unavailable");

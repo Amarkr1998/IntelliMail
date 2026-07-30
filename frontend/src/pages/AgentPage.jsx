@@ -12,21 +12,35 @@ import {
   AccordionSummary,
   AccordionDetails,
   Pagination,
+  MenuItem,
+  TextField,
+  LinearProgress,
+  Alert,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import CloseIcon from '@mui/icons-material/Close';
 import EmailEditor from '../components/EmailEditor';
 import MarkdownViewer from '../components/MarkdownViewer';
 import AgentStepsTimeline from '../components/AgentStepsTimeline';
 import ExportMenu from '../components/ExportMenu';
+import SpeechControls from '../components/SpeechControls';
+import MicButton from '../components/MicButton';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import Loader from '../components/Loader';
 import PageHeader from '../components/common/PageHeader';
 import EmptyState from '../components/common/EmptyState';
 import * as agentApi from '../api/agentApi';
+import * as emailApi from '../api/emailApi';
 import { useSnackbar } from '../context/SnackbarContext';
+import useSpeechRecognition from '../hooks/useSpeechRecognition';
+import { VOICE_LANGUAGES } from '../utils/voiceLanguages';
+
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // must match backend's UPLOAD_MAX_FILE_SIZE (application.yml)
+const MAX_REFERENCE_CHARS = 20_000; // matches backend's @Size cap on referenceContext
 
 const STATUS_COLORS = {
   COMPLETED: 'success',
@@ -44,6 +58,71 @@ function pendingActionDescription(pendingAction) {
   return `Save a template named "${payload.name}" in category ${payload.category}?\n\n${payload.promptText}`;
 }
 
+function combineReferenceContext(files) {
+  if (!files.length) {
+    return '';
+  }
+  return files
+    .map((f) => `--- ${f.name} ---\n${f.content}`)
+    .join('\n\n')
+    .slice(0, MAX_REFERENCE_CHARS);
+}
+
+function FileDropzone({ files, uploading, dragActive, fileInputRef, onBrowse, onFileInputChange, onDrop, onDragOver, onDragLeave, onRemoveFile }) {
+  return (
+    <Paper
+      variant="outlined"
+      onDrop={onDrop}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      sx={{
+        p: 2,
+        bgcolor: dragActive ? 'action.selected' : 'action.hover',
+        borderStyle: dragActive ? 'dashed' : 'solid',
+        borderColor: dragActive ? 'primary.main' : files.length ? 'primary.main' : undefined,
+        transition: 'border-color 0.2s ease, background-color 0.2s ease',
+      }}
+    >
+      <input
+        type="file"
+        ref={fileInputRef}
+        hidden
+        multiple
+        accept=".txt,.pdf,.doc,.docx,.rtf,.odt,.html,.md,.csv,.xlsx,.xls,.ppt,.pptx"
+        onChange={onFileInputChange}
+      />
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: files.length ? 1 : 0 }}>
+        <Button variant="outlined" size="small" startIcon={<UploadFileIcon />} onClick={onBrowse} disabled={uploading}>
+          {uploading ? 'Extracting…' : 'Attach Files'}
+        </Button>
+        <Typography variant="caption" color="text.secondary">
+          or drag & drop — PDF, Word, Excel, PowerPoint, plain text, and more
+        </Typography>
+      </Stack>
+      {uploading && <LinearProgress sx={{ mb: 1, borderRadius: 1 }} />}
+      {files.length > 0 && (
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          {files.map((f) => (
+            <Chip
+              key={f.id}
+              size="small"
+              color="primary"
+              label={f.truncated ? `${f.name} (truncated)` : f.name}
+              onDelete={() => onRemoveFile(f.id)}
+              deleteIcon={<CloseIcon />}
+            />
+          ))}
+        </Stack>
+      )}
+      {files.length > 0 && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+          The agent will use these {files.length > 1 ? 'files' : 'file'} as background reference for every tool it calls.
+        </Typography>
+      )}
+    </Paper>
+  );
+}
+
 function NewTaskTab() {
   const { showSnackbar } = useSnackbar();
   const [goal, setGoal] = useState('');
@@ -52,31 +131,86 @@ function NewTaskTab() {
   const [response, setResponse] = useState(null);
   const [actioning, setActioning] = useState(false);
   const [lastGoal, setLastGoal] = useState('');
+  const [autoRead, setAutoRead] = useState(false);
   const contentRef = useRef(null);
 
-  const handleSubmit = async () => {
+  // Voice input
+  const [sttLanguage, setSttLanguage] = useState(VOICE_LANGUAGES[0].code);
+  const [autoSend, setAutoSend] = useState(false);
+  const textBeforeListeningRef = useRef('');
+  const wasListeningRef = useRef(false);
+  const {
+    supported: speechSupported,
+    listening,
+    interimTranscript,
+    finalTranscript,
+    error: speechError,
+    start: startListening,
+    stop: stopListening,
+    resetTranscript,
+    clearError,
+  } = useSpeechRecognition({ language: sttLanguage });
+
+  // File upload
+  const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!listening && !finalTranscript && !interimTranscript) {
+      return;
+    }
+    const base = textBeforeListeningRef.current;
+    const combined = [base, finalTranscript].filter(Boolean).join(' ').trim();
+    setGoal(interimTranscript ? `${combined} ${interimTranscript}`.trim() : combined);
+  }, [finalTranscript, interimTranscript, listening]);
+
+  const handleSubmit = useCallback(async () => {
     if (!goal.trim()) {
       return;
     }
     setLoading(true);
     try {
-      const result = await agentApi.runTask(goal, null, conversationId);
+      const referenceContext = combineReferenceContext(files);
+      const result = await agentApi.runTask(goal, null, conversationId, referenceContext || null);
       setResponse(result);
       setLastGoal(goal);
       setConversationId(result.conversationId);
       setGoal('');
+      setFiles([]);
       showSnackbar('Agent finished', 'success');
     } catch (err) {
       showSnackbar(err?.response?.data?.message || 'Agent task failed', 'error');
     } finally {
       setLoading(false);
     }
+  }, [goal, files, conversationId, showSnackbar]);
+
+  // Auto-send once the mic stops and produced real transcribed text - opt-in,
+  // since forcing an instant send removes any chance to review a mis-heard word.
+  useEffect(() => {
+    if (wasListeningRef.current && !listening && autoSend && finalTranscript.trim()) {
+      handleSubmit();
+    }
+    wasListeningRef.current = listening;
+  }, [listening, autoSend, finalTranscript, handleSubmit]);
+
+  const handleMicToggle = () => {
+    if (listening) {
+      stopListening();
+      return;
+    }
+    textBeforeListeningRef.current = goal;
+    resetTranscript();
+    startListening();
   };
 
   const handleNewConversation = () => {
     setConversationId(null);
     setResponse(null);
     setGoal('');
+    setFiles([]);
   };
 
   const handleConfirm = async () => {
@@ -111,6 +245,45 @@ function NewTaskTab() {
     }
   };
 
+  const processFiles = async (fileList) => {
+    const list = Array.from(fileList || []);
+    if (!list.length) {
+      return;
+    }
+    setUploading(true);
+    try {
+      for (const file of list) {
+        if (file.size > MAX_UPLOAD_BYTES) {
+          showSnackbar(`"${file.name}" is too large (max 10 MB)`, 'error');
+          continue;
+        }
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          const result = await emailApi.extractFile(file);
+          setFiles((prev) => [
+            ...prev,
+            {
+              id: `${result.fileName}-${Date.now()}-${Math.random()}`,
+              name: result.fileName,
+              content: result.content,
+              truncated: result.truncated,
+            },
+          ]);
+        } catch (err) {
+          showSnackbar(err?.response?.data?.message || `Could not read "${file.name}"`, 'error');
+        }
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+    processFiles(e.dataTransfer.files);
+  };
+
   return (
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
       <Paper variant="outlined" sx={{ p: 3 }}>
@@ -123,14 +296,84 @@ function NewTaskTab() {
               </Button>
             </Stack>
           )}
-          <EmailEditor
-            label="What do you want the agent to do?"
-            value={goal}
-            onChange={setGoal}
-            minRows={8}
-            maxLength={4000}
-            placeholder="e.g. Reply politely to this email confirming Tuesday at 3pm, then translate the reply to German"
+
+          {!speechSupported && (
+            <Alert severity="info">
+              Voice input isn&apos;t supported in this browser (try Chrome or Edge) - you can still type below.
+            </Alert>
+          )}
+          {speechError && (
+            <Alert severity="error" onClose={clearError}>
+              {speechError}
+            </Alert>
+          )}
+
+          <Stack direction="row" spacing={1} alignItems="flex-start">
+            <EmailEditor
+              label="What do you want the agent to do?"
+              value={goal}
+              onChange={setGoal}
+              minRows={7}
+              maxLength={4000}
+              placeholder="e.g. Reply politely to this email confirming Tuesday at 3pm, then translate the reply to German"
+            />
+            <MicButton listening={listening} supported={speechSupported} onClick={handleMicToggle} disabled={loading} />
+          </Stack>
+
+          {speechSupported && (
+            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
+              <TextField
+                select
+                label="Voice language"
+                value={sttLanguage}
+                onChange={(e) => setSttLanguage(e.target.value)}
+                disabled={listening}
+                size="small"
+                sx={{ minWidth: 180 }}
+              >
+                {VOICE_LANGUAGES.map((l) => (
+                  <MenuItem key={l.code} value={l.code}>
+                    {l.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Button
+                size="small"
+                variant={autoSend ? 'contained' : 'outlined'}
+                onClick={() => setAutoSend((v) => !v)}
+              >
+                Auto-send after voice input: {autoSend ? 'On' : 'Off'}
+              </Button>
+              {listening && (
+                <Typography variant="caption" color="error.main">
+                  Listening… tap the microphone again to stop.
+                </Typography>
+              )}
+            </Stack>
+          )}
+
+          <FileDropzone
+            files={files}
+            uploading={uploading}
+            dragActive={dragActive}
+            fileInputRef={fileInputRef}
+            onBrowse={() => fileInputRef.current?.click()}
+            onFileInputChange={(e) => {
+              processFiles(e.target.files);
+              e.target.value = '';
+            }}
+            onDrop={handleDrop}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragActive(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              setDragActive(false);
+            }}
+            onRemoveFile={(id) => setFiles((prev) => prev.filter((f) => f.id !== id))}
           />
+
           <Button
             variant="contained"
             size="large"
@@ -155,7 +398,7 @@ function NewTaskTab() {
         )}
         {!loading && response && (
           <Paper variant="outlined" sx={{ p: 3 }}>
-            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
               <Chip size="small" color={STATUS_COLORS[response.status] || 'default'} label={response.status} />
               {response.finalResult && (
                 <ExportMenu
@@ -166,6 +409,11 @@ function NewTaskTab() {
                 />
               )}
             </Stack>
+            {response.finalResult && (
+              <Box sx={{ mb: 2 }}>
+                <SpeechControls text={response.finalResult} autoRead={autoRead} onAutoReadChange={setAutoRead} />
+              </Box>
+            )}
             <AgentStepsTimeline steps={response.steps} />
             {response.finalResult && (
               <Box sx={{ mt: 2 }} ref={contentRef}>
@@ -254,7 +502,8 @@ function TaskHistoryTab() {
             {details[task.id] ? (
               <>
                 {details[task.id].finalResult && (
-                  <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
+                    <SpeechControls text={details[task.id].finalResult} />
                     <ExportMenu
                       taskId={task.id}
                       title={task.goal}

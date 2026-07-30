@@ -76,9 +76,9 @@ public class AgentOrchestrator {
                 .conversationId(conversationId)
                 .build());
 
-        AgentExecutionContext.set(userId, organizationId, task.getId());
+        AgentExecutionContext.set(userId, organizationId, task.getId(), request.referenceContext());
         try {
-            String userMessage = buildUserMessage(request.goal(), request.context());
+            String userMessage = buildUserMessage(request.goal(), request.context(), request.referenceContext());
 
             String result;
             try {
@@ -177,8 +177,22 @@ public class AgentOrchestrator {
                 .content();
     }
 
-    private String buildUserMessage(String goal, String context) {
-        return (context == null || context.isBlank()) ? goal : goal + "\n\nContext:\n" + context;
+    private String buildUserMessage(String goal, String context, String referenceContext) {
+        StringBuilder message = new StringBuilder(goal);
+        if (context != null && !context.isBlank()) {
+            message.append("\n\nContext:\n").append(context);
+        }
+        if (referenceContext != null && !referenceContext.isBlank()) {
+            // The reference text itself is never pasted here - it's injected server-side
+            // into whichever tool the model calls (see AgentExecutionContext), keeping it
+            // out of chat memory and out of tool-call token cost. The model still needs
+            // this note, otherwise it has no reason to believe reference material exists
+            // and may just answer directly without calling any tool at all.
+            message.append("\n\n[The user has attached reference file(s) as background material. "
+                    + "Any tool you call automatically receives this material, so call the tool "
+                    + "that best matches the goal even if you can't see the file content yourself.]");
+        }
+        return message.toString();
     }
 
     private void requireAwaitingConfirmation(AgentTask task, String action) {

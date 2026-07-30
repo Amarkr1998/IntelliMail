@@ -21,6 +21,10 @@ public record AgentTaskRequest(
         @Size(max = 20_000, message = "Context must not exceed 20,000 characters")
         String context,
 
-        UUID conversationId
+        UUID conversationId,
+
+        /** Background text extracted from uploaded attachment(s) (POST /api/email/extract) - never the goal/context text itself. */
+        @Size(max = 20_000, message = "Reference context must not exceed 20,000 characters")
+        String referenceContext
 ) {
 }

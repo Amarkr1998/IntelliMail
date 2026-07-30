@@ -12,7 +12,7 @@ import java.util.UUID;
  */
 public final class AgentExecutionContext {
 
-    public record Context(UUID userId, UUID organizationId, UUID taskId) {
+    public record Context(UUID userId, UUID organizationId, UUID taskId, String referenceContext) {
     }
 
     private static final ThreadLocal<Context> CURRENT = new ThreadLocal<>();
@@ -20,8 +20,8 @@ public final class AgentExecutionContext {
     private AgentExecutionContext() {
     }
 
-    public static void set(UUID userId, UUID organizationId, UUID taskId) {
-        CURRENT.set(new Context(userId, organizationId, taskId));
+    public static void set(UUID userId, UUID organizationId, UUID taskId, String referenceContext) {
+        CURRENT.set(new Context(userId, organizationId, taskId, referenceContext));
     }
 
     public static Context current() {
